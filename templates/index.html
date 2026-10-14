@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TLMS Portal — Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='shared.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body class="auth-body">
+
+  <div class="auth-wrapper">
+    <!-- Header -->
+    <div class="auth-logo">
+      <h1>TLMS Portal</h1>
+      <p>Centralized TLMS Portal</p>
+    </div>
+
+    <!-- Login Card -->
+    <div class="auth-card">
+      <h2>Welcome Back</h2>
+      <p class="auth-sub">Sign in to your account</p>
+
+      <!-- Form -->
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="username" class="form-input" placeholder="Enter username or ID" autocomplete="off" autofocus />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="password-wrap">
+            <input type="password" id="password" class="form-input" placeholder="Enter password" />
+            <button type="button" class="eye-btn" onclick="togglePassword()" aria-label="Toggle password visibility">
+              <i class="fas fa-eye" id="eyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="loginError" class="error-msg" style="display:none">
+          Invalid username or password.
+        </div>
+
+        <button type="submit" class="btn-login">
+          Sign In
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>window.TLMS_INITIAL_STATE = {{ initial_state|tojson }};</script>
+  <script src="{{ url_for('static', filename='data.js') }}"></script>
+  <script>
+    function togglePassword() {
+      const inp = document.getElementById('password');
+      const icon = document.getElementById('eyeIcon');
+      if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+      else { inp.type = 'password'; icon.className = 'fas fa-eye'; }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const errEl = document.getElementById('loginError');
+      if (!username || !password) {
+        errEl.textContent = 'Please enter both username and password.';
+        errEl.style.display = 'flex';
+        return;
+      }
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({username, password})
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Invalid username or password.');
+        sessionStorage.setItem('loggedIn', result.role);
+        if (result.role === 'employee') sessionStorage.setItem('empId', result.employee_id);
+        window.location.href = result.role === 'admin' ? '/admin' : '/employee';
+      } catch (error) {
+        errEl.textContent = error.message || 'Unable to sign in. Please try again.';
+        errEl.style.display = 'flex';
+      }
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+    });
+  </script>
+</body>
+</html>

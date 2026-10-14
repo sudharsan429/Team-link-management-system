@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TLMS Portal – Admin Panel</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='shared.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body class="app-body">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <span>TLMS Portal</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="section-label">Main</div>
+    <a class="nav-link active" data-page="dashboard">
+      <i class="fas fa-th-large"></i> Dashboard
+    </a>
+    <a class="nav-link" data-page="teams">
+      <i class="fas fa-users"></i> Teams
+    </a>
+    <a class="nav-link" data-page="employees">
+      <i class="fas fa-user-circle"></i> Employees
+    </a>
+    <a class="nav-link" data-page="tasks">
+      <i class="fas fa-tasks"></i> Tasks
+    </a>
+    <a class="nav-link" data-page="links">
+      <i class="fas fa-link"></i> Team Links
+    </a>
+    <div class="section-label" style="margin-top:8px">Reports</div>
+    <a class="nav-link" data-page="progress">
+      <i class="fas fa-chart-bar"></i> Progress Report
+    </a>
+    <div class="section-label" style="margin-top:8px">Account</div>
+    <a class="nav-link" data-page="settings">
+      <i class="fas fa-cog"></i> Settings
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-badge">
+      <div class="ub-avatar" id="adminAvatar">AD</div>
+      <div class="ub-info">
+        <div class="ub-name" id="adminName">Admin</div>
+        <div class="ub-role">Administrator</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+  </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<div class="main-area">
+  <header class="topbar">
+    <span class="topbar-title" id="topbarTitle">Dashboard</span>
+    <div class="topbar-right">
+      <div class="live-clock" id="liveClock" title="Current system time">
+        <i class="fas fa-clock"></i>
+        <span class="clock-time">--</span>
+      </div>
+      <span style="font-size:.8rem;color:var(--text-2)">Admin Panel</span>
+      <div class="av av-sm" id="topbarAv" style="background:var(--primary)">AD</div>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <h2>Dashboard</h2>
+          <p>Overview of your organization.</p>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-users"></i></div>
+          <div><div class="stat-val" id="s-teams">0</div><div class="stat-lbl">Teams</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-user-friends"></i></div>
+          <div><div class="stat-val" id="s-emp">0</div><div class="stat-lbl">Employees</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+          <div><div class="stat-val" id="s-done">0</div><div class="stat-lbl">Tasks Done</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-clock"></i></div>
+          <div><div class="stat-val" id="s-pending">0</div><div class="stat-lbl">Pending Tasks</div></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <!-- Recent Tasks -->
+        <div class="card">
+          <div class="card-title"><i class="fas fa-tasks"></i> Recent Tasks</div>
+          <div id="d-recentTasks"><div class="tbl-empty text-muted" style="padding:20px">No tasks yet.</div></div>
+        </div>
+        <!-- Teams Summary -->
+        <div class="card">
+          <div class="card-title"><i class="fas fa-users"></i> Teams Summary</div>
+          <div id="d-teams"><div class="tbl-empty text-muted" style="padding:20px">No teams yet.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TEAMS ============ -->
+    <section class="page" id="page-teams">
+      <div class="page-header">
+        <div><h2>Teams</h2><p>Create and manage teams.</p></div>
+        <button class="btn btn-primary" onclick="openAddTeam()">
+          <i class="fas fa-plus"></i> New Team
+        </button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Team Name</th>
+              <th>Description</th>
+              <th>Members</th>
+              <th>Tasks</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="teamsBody">
+            <tr><td colspan="5" class="tbl-empty">No teams yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ EMPLOYEES ============ -->
+    <section class="page" id="page-employees">
+      <div class="page-header">
+        <div><h2>Employees</h2><p>Add employees and set their login credentials.</p></div>
+        <button class="btn btn-primary" onclick="openAddEmployee()">
+          <i class="fas fa-user-plus"></i> Add Employee
+        </button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>User ID</th>
+              <th>Role</th>
+              <th>Team</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="empBody">
+            <tr><td colspan="6" class="tbl-empty">No employees yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ TASKS ============ -->
+    <section class="page" id="page-tasks">
+      <div class="page-header">
+        <div><h2>Tasks</h2><p>Create tasks and assign to employees.</p></div>
+        <button class="btn btn-primary" onclick="openAddTask()">
+          <i class="fas fa-plus"></i> New Task
+        </button>
+      </div>
+
+      <!-- Filter bar -->
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <input type="text" class="inp" style="max-width:220px" placeholder="Search tasks…" id="taskSearch" oninput="renderTasks()" />
+        <select class="inp" style="max-width:160px" id="taskStatusF" onchange="renderTasks()">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="inprogress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+        <select class="inp" style="max-width:160px" id="taskTeamF" onchange="renderTasks()">
+          <option value="">All Teams</option>
+        </select>
+      </div>
+
+      <div class="tbl-wrap">
+        <div class="tasks-table-header-title" id="tasksCountHeader">All Tasks (0)</div>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>TASK DETAILS</th>
+              <th>TEAM</th>
+              <th>ASSIGNEE</th>
+              <th>PRIORITY</th>
+              <th>DUE DATE</th>
+              <th>STATUS</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="tasksBody">
+            <tr><td colspan="7" class="tbl-empty">No tasks yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ TEAM LINKS ============ -->
+    <section class="page" id="page-links">
+      <div class="page-header">
+        <div>
+          <h2>Team Links</h2>
+          <p>Organize resources by category and manage access across teams.</p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline" onclick="openAddCategoryModal()">
+            <i class="fas fa-folder-plus"></i> Add Category
+          </button>
+          <button class="btn btn-primary" onclick="openAddLinkModal()">
+            <i class="fas fa-plus"></i> Add Link
+          </button>
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="category-tabs" id="adminCategoryTabs"></div>
+
+      <div class="card">
+        <div class="team-link-toolbar">
+          <div>
+            <div class="card-title" style="margin-bottom:2px" id="adminLinksTitle">Saved links</div>
+            <p class="text-muted" style="font-size:.85rem">Viewing links by category and team access permissions.</p>
+          </div>
+          <input type="search" class="inp" id="linkSearch" placeholder="Search links…" aria-label="Search team links" oninput="renderTeamLinks()" />
+        </div>
+        <div class="tbl-wrap" style="border:none;box-shadow:none">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Link</th>
+                <th>Category</th>
+                <th>Accessible Teams</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="teamLinksBody">
+              <tr><td colspan="5" class="tbl-empty">No links yet. Click Add Link above.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PROGRESS ============ -->
+    <section class="page" id="page-progress">
+      <div class="page-header">
+        <div><h2>Progress Report</h2><p>Track task completion across teams and employees.</p></div>
+      </div>
+
+      <!-- Overall -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><i class="fas fa-chart-pie"></i> Overall Completion</div>
+        <div style="display:flex;align-items:center;gap:32px;flex-wrap:wrap">
+          <div style="text-align:center">
+            <div style="font-size:2.8rem;font-weight:800;color:var(--primary)" id="overallPct">0%</div>
+            <div style="font-size:.85rem;color:var(--text-2)">Tasks Completed</div>
+          </div>
+          <div style="flex:1;min-width:200px">
+            <div class="prog-wrap" style="height:14px">
+              <div class="prog-bar" id="overallBar" style="width:0%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.8rem;color:var(--text-2)">
+              <span id="prog-done-count">0 Done</span>
+              <span id="prog-total-count">0 Total</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per Team -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><i class="fas fa-users"></i> Team Progress</div>
+        <div id="teamProgressBody" class="gap-10">
+          <p class="text-muted" style="font-size:.875rem">No teams yet.</p>
+        </div>
+      </div>
+
+      <!-- Per Employee -->
+      <div class="card">
+        <div class="card-title"><i class="fas fa-user"></i> Employee Performance</div>
+        <div class="tbl-wrap" style="border:none;box-shadow:none">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Employee</th><th>Team</th><th>Assigned</th><th>Done</th><th>Completion</th>
+              </tr>
+            </thead>
+            <tbody id="empPerfBody">
+              <tr><td colspan="5" class="tbl-empty">No data yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section class="page" id="page-settings">
+      <div class="page-header">
+        <div><h2>Settings</h2><p>Manage your admin account credentials.</p></div>
+      </div>
+
+      <div style="max-width:480px">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-user-shield"></i> Admin Account</div>
+
+          <div class="field" style="margin-bottom:14px">
+            <label>New Username</label>
+            <input type="text" class="inp" id="newUsername" placeholder="Enter new username" />
+          </div>
+          <div class="field" style="margin-bottom:14px">
+            <label>New Password</label>
+            <input type="password" class="inp" id="newPassword" placeholder="Enter new password" />
+          </div>
+          <div class="field" style="margin-bottom:20px">
+            <label>Confirm Password</label>
+            <input type="password" class="inp" id="confirmPassword" placeholder="Re-enter new password" />
+          </div>
+          <button class="btn btn-primary" onclick="saveAdminCreds()">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </div>
+
+        <div class="card" style="margin-top:20px">
+          <div class="card-title"><i class="fas fa-trash-alt"></i> Demo Data Cleanup</div>
+          <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:14px">
+            Ensure all preloaded demo teams, demo links, and sample items are completely removed so that only the details you entered are visible.
+          </p>
+          <button type="button" class="btn btn-secondary" onclick="purgeDemoDataManual()">
+            <i class="fas fa-broom"></i> Remove Demo Details
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== MODAL: Add/Edit Team ===== -->
+<div class="modal-overlay" id="m-team">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3><i class="fas fa-users"></i> <span id="m-team-title">New Team</span></h3>
+      <button class="modal-close" onclick="closeModal('m-team')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="t-id" />
+      <div class="field">
+        <label>Team Name <span class="req">*</span></label>
+        <input type="text" class="inp" id="t-name" placeholder="e.g. Frontend Team" />
+      </div>
+      <div class="field">
+        <label>Team Description</label>
+        <textarea class="inp" id="t-desc" rows="3" placeholder="Brief description…"></textarea>
+      </div>
+      <div class="field">
+        <label>Team Leader Name <span class="req">*</span></label>
+        <input type="text" class="inp" id="t-leader" placeholder="e.g. Alex Johnson" />
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-outline" onclick="closeModal('m-team')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTeam()">Save Team</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Add/Edit Employee ===== -->
+<div class="modal-overlay" id="m-emp">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3><i class="fas fa-user-plus"></i> <span id="m-emp-title">Add Team Member</span></h3>
+      <button class="modal-close" onclick="closeModal('m-emp')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="e-id" />
+
+      <!-- 1. Full Name -->
+      <div class="field">
+        <label>Full Name <span class="req">*</span></label>
+        <input type="text" class="inp" id="e-fullname" placeholder="e.g. John Doe" />
+      </div>
+
+      <!-- 2. Email Address & 3. Phone Number -->
+      <div class="inp-row">
+        <div class="field">
+          <label>Email Address <span class="req">*</span></label>
+          <input type="email" class="inp" id="e-email" placeholder="john@example.com" />
+        </div>
+        <div class="field">
+          <label>Phone Number <span class="req">*</span></label>
+          <input type="tel" class="inp" id="e-phone" placeholder="e.g. 9876543210" maxlength="10" inputmode="numeric" oninput="handlePhoneInput(this)" />
+        </div>
+      </div>
+
+      <!-- 4. Designation or Role & 5. Assigned Team -->
+      <div class="inp-row">
+        <div class="field">
+          <label>Designation or Role <span class="req">*</span></label>
+          <input type="text" class="inp" id="e-role" placeholder="e.g. Developer, Designer, Team Lead…" />
+        </div>
+        <div class="field">
+          <label>Assigned Team <span class="req">*</span></label>
+          <select class="inp" id="e-team">
+            <option value="">Select Assigned Team…</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 6. Joining Date -->
+      <div class="field">
+        <label>Joining Date <span class="req">*</span></label>
+        <input type="date" class="inp" id="e-joining" />
+      </div>
+
+      <!-- 7. User ID & 8. Password -->
+      <div class="inp-row">
+        <div class="field">
+          <label>Employee ID / User ID <span class="req">*</span></label>
+          <input type="text" class="inp" id="e-username" placeholder="e.g. EMP001 or johndoe" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Password <span class="req" id="e-password-req">*</span></label>
+          <input type="password" class="inp" id="e-password" placeholder="Set password" autocomplete="off" />
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="field">
+        <label>Status</label>
+        <select class="inp" id="e-status">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-outline" onclick="closeModal('m-emp')">Cancel</button>
+      <button class="btn btn-primary" id="e-saveBtn" onclick="saveEmployee()">Create Team Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Add/Edit Task ===== -->
+<div class="modal-overlay" id="m-task">
+  <div class="modal modal-lg">
+    <div class="modal-hd">
+      <h3><i class="fas fa-tasks"></i> <span id="m-task-title">New Task</span></h3>
+      <button class="modal-close" onclick="closeModal('m-task')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="tk-id" />
+      <div class="field">
+        <label>Task Title <span class="req">*</span></label>
+        <input type="text" class="inp" id="tk-title" placeholder="e.g. Design homepage wireframes" />
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea class="inp" id="tk-desc" rows="3" placeholder="Task details…"></textarea>
+      </div>
+      <div class="inp-row">
+        <div class="field" style="position:relative">
+          <label>Assign to Team(s) <span class="req">*</span></label>
+          <div class="multi-select-wrap" id="tk-teams-wrap">
+            <div class="inp multi-select-trigger" id="tk-teams-trigger" onclick="toggleTeamDropdown(event)" tabindex="0">
+              <span id="tk-teams-label" class="multi-select-label placeholder">Select teams…</span>
+              <i class="fas fa-chevron-down" style="font-size:11px;color:#777;margin-left:auto"></i>
+            </div>
+            <div class="multi-select-dropdown" id="tk-teams-dropdown" style="display:none">
+              <div class="multi-select-actions">
+                <button type="button" class="ms-btn" onclick="selectAllTeams(true)">Select All</button>
+                <button type="button" class="ms-btn" onclick="selectAllTeams(false)">Clear</button>
+              </div>
+              <div id="tk-teams-options" class="multi-select-options">
+                <!-- Checkboxes populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Assign to Employee <span style="font-size:11px;color:var(--text-muted);font-weight:normal">(Optional)</span></label>
+          <select class="inp" id="tk-emp">
+            <option value="">Unassigned (All team members)</option>
+          </select>
+        </div>
+      </div>
+      <div class="inp-row">
+        <div class="field">
+          <label>Priority</label>
+          <select class="inp" id="tk-priority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select class="inp" id="tk-status">
+            <option value="pending" selected>Pending</option>
+            <option value="inprogress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </div>
+      <div class="inp-row">
+        <div class="field">
+          <label>Start Date</label>
+          <input type="date" class="inp" id="tk-start" />
+        </div>
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" class="inp" id="tk-due" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-outline" onclick="closeModal('m-task')">Cancel</button>
+      <button class="btn btn-primary" id="tk-saveBtn" onclick="saveTask()">Create Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Task Detail ===== -->
+<div class="modal-overlay" id="m-taskview">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3><i class="fas fa-info-circle"></i> Task Detail</h3>
+      <button class="modal-close" onclick="closeModal('m-taskview')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="taskViewBody"></div>
+    <div class="modal-ft">
+      <button class="btn btn-outline" onclick="closeModal('m-taskview')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Add/Edit Team Link ===== -->
+<div class="modal-overlay" id="m-link">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3><i class="fas fa-link"></i> <span id="m-link-title">Add Link</span></h3>
+      <button class="modal-close" onclick="closeModal('m-link')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="link-id" />
+
+      <!-- Title -->
+      <div class="field">
+        <label for="link-title">Title <span class="req">*</span></label>
+        <input type="text" class="inp" id="link-title" placeholder="Enter the title of the link" required maxlength="120" />
+      </div>
+
+      <!-- Description -->
+      <div class="field">
+        <label for="link-description">Description</label>
+        <textarea class="inp" id="link-description" rows="2" maxlength="300" placeholder="Enter a description of the link"></textarea>
+      </div>
+
+      <!-- URL -->
+      <div class="field">
+        <label for="link-url">URL <span class="req">*</span></label>
+        <input type="url" class="inp" id="link-url" placeholder="Enter website URL (e.g. https://...)" required />
+      </div>
+
+      <!-- Category -->
+      <div class="field">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <label for="link-category" style="margin-bottom:0">Category <span class="req">*</span></label>
+          <button type="button" class="btn-category-action" onclick="toggleModalInlineCategory('admin', true)">
+            <i class="fas fa-plus-circle"></i> Add New Category
+          </button>
+        </div>
+        <select class="inp" id="link-category" required onchange="onCategorySelectChange('admin', this.value)">
+          <option value="">Select Category…</option>
+        </select>
+        <div id="admin-inline-category-row" class="inline-category-row" style="display:none">
+          <label style="font-size:12px;font-weight:600;margin-bottom:4px;display:block">Create New Category:</label>
+          <div style="display:flex;gap:6px">
+            <input type="text" class="inp" id="admin-inline-category-name" placeholder="Enter category name…" maxlength="40" style="min-height:36px;padding:6px 10px" onkeydown="if(event.key==='Enter'){event.preventDefault();saveModalInlineCategory('admin');}" />
+            <button type="button" class="btn btn-primary btn-sm" onclick="saveModalInlineCategory('admin')" style="min-height:36px;white-space:nowrap">Add</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleModalInlineCategory('admin', false)" style="min-height:36px">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Select which team or teams can access that link -->
+      <div class="field" style="position:relative">
+        <label>Accessible Teams <span class="req">*</span></label>
+        <div class="multi-select-wrap" id="link-teams-wrap">
+          <div class="inp multi-select-trigger" id="link-teams-trigger" onclick="toggleLinkTeamDropdown(event)" tabindex="0">
+            <span id="link-teams-label" class="multi-select-label placeholder">Select teams…</span>
+            <i class="fas fa-chevron-down" style="font-size:11px;color:#777;margin-left:auto"></i>
+          </div>
+          <div class="multi-select-dropdown" id="link-teams-dropdown" style="display:none">
+            <div class="multi-select-actions">
+              <button type="button" class="ms-btn" onclick="selectAllLinkTeams(true)">Select All</button>
+              <button type="button" class="ms-btn" onclick="selectAllLinkTeams(false)">Clear</button>
+            </div>
+            <div id="link-teams-options" class="multi-select-options">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-outline" onclick="closeModal('m-link')">Cancel</button>
+      <button class="btn btn-primary" id="link-saveBtn" onclick="saveTeamLink()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Manage & Add Category ===== -->
+<div class="modal-overlay" id="m-category">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hd">
+      <h3><i class="fas fa-folder-plus"></i> <span>Manage & Add Categories</span></h3>
+      <button class="modal-close" onclick="closeModal('m-category')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="new-category-name">New Category Name <span class="req">*</span></label>
+        <div style="display:flex;gap:8px">
+          <input type="text" class="inp" id="new-category-name" placeholder="e.g. Jira, Figma, Docs" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();submitNewCategory();}" />
+          <button type="button" class="btn btn-primary" onclick="submitNewCategory()" style="white-space:nowrap">
+            <i class="fas fa-plus"></i> Add
+          </button>
+        </div>
+        <p class="text-muted" style="font-size:12px;margin-top:6px">Create custom categories to organize team links.</p>
+      </div>
+
+      <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <label style="font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:0">Existing Categories</label>
+          <span style="font-size:11px;color:var(--text-muted)">Click × to remove</span>
+        </div>
+        <div id="categoryChipsList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-outline" onclick="closeModal('m-category')">Done</button>
+    </div>
+  </div>
+</div>
+
+
+<script>window.TLMS_INITIAL_STATE = {{ initial_state|tojson }};</script>
+  <script src="{{ url_for('static', filename='data.js') }}"></script>
+<script>
+/* =================== AUTH =================== */
+requireAuth('admin');
+
+/* =================== NAV =================== */
+function navigate(page) {
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.page === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === `page-${page}`));
+  document.getElementById('topbarTitle').textContent = {
+    dashboard: 'Dashboard', teams: 'Teams', employees: 'Employees',
+    tasks: 'Tasks', links: 'Team Links', progress: 'Progress Report', settings: 'Settings'
+  }[page] || page;
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'teams')     renderTeams();
+  if (page === 'employees') renderEmployees();
+  if (page === 'tasks')     { populateTaskFilters(); renderTasks(); }
+  if (page === 'links')     { renderAdminCategoryTabs(); renderTeamLinks(); }
+  if (page === 'progress')  renderProgress();
+}
+
+document.querySelectorAll('.nav-link').forEach(l => {
+  l.addEventListener('click', e => { e.preventDefault(); navigate(l.dataset.page); });
+});
+
+/* =================== MODAL HELPERS =================== */
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+});
+
+/* =================== TEAMS =================== */
+function openAddTeam() {
+  clearFormErrors('m-team');
+  document.getElementById('m-team-title').textContent = 'New Team';
+  document.getElementById('t-id').value = '';
+  document.getElementById('t-name').value = '';
+  document.getElementById('t-desc').value = '';
+  document.getElementById('t-leader').value = '';
+  openModal('m-team');
+}
+
+function saveTeam() {
+  clearFormErrors('m-team');
+  const modal = document.getElementById('m-team');
+  if (!validateFormFields(modal)) return;
+
+  const name = document.getElementById('t-name').value.trim();
+  const desc = document.getElementById('t-desc').value.trim();
+  const leader = document.getElementById('t-leader').value.trim();
+  const teams = Storage.getTeams();
+  const id = document.getElementById('t-id').value;
+
+  if (id) {
+    const idx = teams.findIndex(t => t.id == id);
+    if (idx > -1) {
+      teams[idx].name = name;
+      teams[idx].desc = desc;
+      teams[idx].leader = leader;
+    }
+  } else {
+    teams.push({
+      id: Storage.nextId('ts_tid'),
+      name,
+      desc,
+      leader,
+      createdAt: new Date().toISOString()
+    });
+  }
+  Storage.saveTeams(teams);
+  closeModal('m-team');
+  toast(id ? 'Team updated!' : 'Team created!', 'success');
+  renderTeams();
+  renderDashboard();
+  if (typeof populateLinkTeams === 'function') populateLinkTeams();
+  if (typeof populateTaskFilters === 'function') populateTaskFilters();
+}
+
+function editTeam(id) {
+  clearFormErrors('m-team');
+  const team = Storage.getTeams().find(t => t.id == id);
+  if (!team) return;
+  document.getElementById('m-team-title').textContent = 'Edit Team';
+  document.getElementById('t-id').value = team.id;
+  document.getElementById('t-name').value = team.name || '';
+  document.getElementById('t-desc').value = team.desc || '';
+  document.getElementById('t-leader').value = team.leader || team.leaderName || '';
+  openModal('m-team');
+}
+
+function deleteTeam(id) {
+  if (!confirm('Delete this team?')) return;
+  let teams = Storage.getTeams().filter(t => t.id != id);
+  Storage.saveTeams(teams);
+  toast('Team deleted.', 'warning');
+  renderTeams();
+  renderDashboard();
+  if (typeof populateLinkTeams === 'function') populateLinkTeams();
+  if (typeof populateTaskFilters === 'function') populateTaskFilters();
+}
+
+function renderTeams() {
+  const teams = Storage.getTeams();
+  const employees = Storage.getEmployees();
+  const tasks = Storage.getTasks();
+  const tbody = document.getElementById('teamsBody');
+  if (!tbody) return;
+  if (!teams.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="tbl-empty">No teams yet. Create your first team.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = teams.map(t => {
+    const mc = employees.filter(e => e.teamId == t.id).length;
+    const tc = tasks.filter(tk => taskBelongsToTeam(tk, t.id)).length;
+    return `<tr>
+      <td>
+        <strong>${escapeHtml(t.name)}</strong>
+        ${t.leader ? `<div style="font-size:.78rem;color:var(--text-2);margin-top:2px"><i class="fas fa-user-tie" style="margin-right:4px"></i>Leader: ${escapeHtml(t.leader)}</div>` : ''}
+      </td>
+      <td style="color:var(--text-2);font-size:.85rem">${escapeHtml(t.desc || '—')}</td>
+      <td><span class="badge badge-primary">${mc} members</span></td>
+      <td><span class="badge badge-muted">${tc} tasks</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn-icon" onclick="editTeam(${t.id})" title="Edit"><i class="fas fa-edit"></i></button>
+          <button class="btn-icon" onclick="deleteTeam(${t.id})" title="Delete" style="background:#fef2f2;color:#dc2626"><i class="fas fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* =================== EMPLOYEES =================== */
+function populateTeamDD(selId, currentVal) {
+  const sel = document.getElementById(selId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select Assigned Team…</option>';
+  Storage.getTeams().forEach(t => {
+    const o = document.createElement('option');
+    o.value = t.id;
+    o.textContent = t.name;
+    if (currentVal && String(currentVal) === String(t.id)) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function openAddEmployee() {
+  clearFormErrors('m-emp');
+  document.getElementById('m-emp-title').textContent = 'Add Team Member';
+  document.getElementById('e-id').value = '';
+  document.getElementById('e-fullname').value = '';
+  document.getElementById('e-email').value = '';
+  document.getElementById('e-phone').value = '';
+  document.getElementById('e-role').value = '';
+  document.getElementById('e-joining').value = new Date().toISOString().split('T')[0];
+  document.getElementById('e-username').value = '';
+  document.getElementById('e-password').value = '';
+  document.getElementById('e-password').placeholder = 'Set password';
+  document.getElementById('e-password-req').style.display = 'inline';
+  document.getElementById('e-status').value = 'active';
+  populateTeamDD('e-team', '');
+  document.getElementById('e-saveBtn').textContent = 'Create Team Member';
+  openModal('m-emp');
+}
+
+function saveEmployee() {
+  clearFormErrors('m-emp');
+  const modal = document.getElementById('m-emp');
+  const id = document.getElementById('e-id').value;
+
+  const passInput = document.getElementById('e-password');
+  if (id) {
+    passInput.removeAttribute('data-required');
+  } else {
+    passInput.setAttribute('data-required', 'true');
+  }
+
+  if (!validateFormFields(modal)) return;
+
+  const fullName = document.getElementById('e-fullname').value.trim();
+  const email    = document.getElementById('e-email').value.trim();
+  const phoneRaw = document.getElementById('e-phone').value.trim();
+  const phone    = phoneRaw.replace(/\D/g, '');
+
+  if (!phone) {
+    showFieldError('e-phone', 'Please fill this field.');
+    toast('Please fill this field.', 'danger');
+    document.getElementById('e-phone').focus();
+    return;
+  }
+  if (!/^[6-9]/.test(phone)) {
+    showFieldError('e-phone', 'Phone number must start with 6, 7, 8, or 9.');
+    toast('Phone number must start with 6, 7, 8, or 9.', 'danger');
+    document.getElementById('e-phone').focus();
+    return;
+  }
+  if (phone.length < 10) {
+    showFieldError('e-phone', 'Please enter 10 numbers.');
+    toast('Please enter 10 numbers.', 'danger');
+    document.getElementById('e-phone').focus();
+    return;
+  }
+
+  const role     = document.getElementById('e-role').value.trim();
+  const teamId   = document.getElementById('e-team').value;
+  const joiningDate = document.getElementById('e-joining').value;
+  const uname    = document.getElementById('e-username').value.trim();
+  const pass     = document.getElementById('e-password').value.trim();
+  const status   = document.getElementById('e-status').value;
+
+  const employees = Storage.getEmployees();
+  const dupUser = employees.find(e => (e.username === uname || e.userId === uname) && e.id != id);
+  if (dupUser) {
+    showFieldError('e-username', 'User ID already exists. Please choose another.');
+    toast('User ID already exists.', 'danger');
+    return;
+  }
+
+  const nameParts = fullName.split(' ');
+  const firstName = nameParts[0] || fullName;
+  const lastName = nameParts.slice(1).join(' ') || '';
+
+  if (id) {
+    const idx = employees.findIndex(e => e.id == id);
+    if (idx > -1) {
+      employees[idx].fullName  = fullName;
+      employees[idx].firstName = firstName;
+      employees[idx].lastName  = lastName;
+      employees[idx].email     = email;
+      employees[idx].phone     = phone;
+      employees[idx].role      = role;
+      employees[idx].teamId    = teamId || null;
+      employees[idx].joiningDate = joiningDate;
+      employees[idx].username  = uname;
+      employees[idx].userId    = uname;
+      if (pass) employees[idx].password = pass;
+      employees[idx].status    = status;
+    }
+    toast('Team member updated!', 'success');
+  } else {
+    employees.push({
+      id: Storage.nextId('ts_eid'),
+      fullName,
+      firstName,
+      lastName,
+      email,
+      phone,
+      role,
+      teamId: teamId || null,
+      joiningDate,
+      username: uname,
+      userId: uname,
+      password: pass,
+      status,
+      createdAt: new Date().toISOString()
+    });
+    toast('Team member created!', 'success');
+  }
+  Storage.saveEmployees(employees);
+  closeModal('m-emp');
+  renderEmployees();
+  renderDashboard();
+  renderTeams();
+}
+
+function editEmployee(id) {
+  clearFormErrors('m-emp');
+  const emp = Storage.getEmployees().find(e => e.id == id);
+  if (!emp) return;
+  document.getElementById('m-emp-title').textContent = 'Edit Team Member';
+  document.getElementById('e-id').value       = emp.id;
+  document.getElementById('e-fullname').value = emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim();
+  document.getElementById('e-email').value    = emp.email || '';
+  document.getElementById('e-phone').value    = emp.phone || '';
+  document.getElementById('e-role').value     = emp.role || '';
+  document.getElementById('e-joining').value  = emp.joiningDate || '';
+  document.getElementById('e-username').value = emp.username || emp.userId || '';
+  document.getElementById('e-password').value = '';
+  document.getElementById('e-password').placeholder = 'Leave blank to keep current';
+  document.getElementById('e-password-req').style.display = 'none';
+  document.getElementById('e-status').value   = emp.status || 'active';
+  populateTeamDD('e-team', emp.teamId);
+  document.getElementById('e-saveBtn').textContent = 'Update Team Member';
+  openModal('m-emp');
+}
+
+function deleteEmployee(id) {
+  if (!confirm('Remove this employee?')) return;
+  Storage.saveEmployees(Storage.getEmployees().filter(e => e.id != id));
+  toast('Employee removed.', 'warning');
+  renderEmployees();
+  renderDashboard();
+  renderTeams();
+}
+
+function renderEmployees() {
+  const employees = Storage.getEmployees();
+  const teams = Storage.getTeams();
+  const tbody = document.getElementById('empBody');
+  if (!tbody) return;
+  if (!employees.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="tbl-empty">No employees yet. Add your first employee.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = employees.map(emp => {
+    const team = teams.find(t => String(t.id) === String(emp.teamId));
+    const empName = emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.username || '—';
+    const av = initials(empName);
+    const userId = emp.userId || emp.username || '—';
+    return `<tr>
+      <td>
+        <div class="flex-center">
+          <div class="av av-sm" style="background:var(--primary)">${av}</div>
+          <div>
+            <div style="font-weight:600">${escapeHtml(empName)}</div>
+            <div style="font-size:.78rem;color:var(--text-2)">${escapeHtml(emp.email || '')}${emp.phone ? ` · ${escapeHtml(emp.phone)}` : ''}</div>
+          </div>
+        </div>
+      </td>
+      <td><code style="background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:4px;font-size:.82rem">${escapeHtml(userId)}</code></td>
+      <td><span class="badge badge-primary">${escapeHtml(emp.role || '—')}</span></td>
+      <td>${team ? escapeHtml(team.name) : '<span class="text-muted">—</span>'}</td>
+      <td><span class="badge ${emp.status === 'active' ? 'badge-success' : 'badge-muted'}">${escapeHtml(emp.status || 'active')}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="tbl-action-btn tbl-btn-edit" onclick="editEmployee(${emp.id})">Edit</button>
+          <button class="tbl-action-btn tbl-btn-del" onclick="deleteEmployee(${emp.id})">Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* =================== TASKS =================== */
+let selectedTaskTeamIds = [];
+
+function populateTaskTeamDD(selectedIds = []) {
+  if (Array.isArray(selectedIds)) {
+    selectedTaskTeamIds = selectedIds.map(String);
+  } else if (selectedIds) {
+    selectedTaskTeamIds = [String(selectedIds)];
+  } else {
+    selectedTaskTeamIds = [];
+  }
+
+  const teams = Storage.getTeams();
+  const optionsContainer = document.getElementById('tk-teams-options');
+  if (!optionsContainer) return;
+
+  if (!teams.length) {
+    optionsContainer.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--text-muted);text-align:center">No teams available</div>';
+  } else {
+    optionsContainer.innerHTML = teams.map(t => {
+      const isChecked = selectedTaskTeamIds.includes(String(t.id));
+      return `
+        <label class="ms-option-label" onclick="event.stopPropagation()">
+          <input type="checkbox" value="${t.id}" ${isChecked ? 'checked' : ''} onchange="onTaskTeamCheckboxChange(event)" />
+          <span>${escapeHtml(t.name)}</span>
+        </label>
+      `;
+    }).join('');
+  }
+  updateTaskTeamsTriggerLabel();
+}
+
+function updateTaskTeamsTriggerLabel() {
+  const teams = Storage.getTeams();
+  const labelEl = document.getElementById('tk-teams-label');
+  if (!labelEl) return;
+
+  if (selectedTaskTeamIds.length === 0) {
+    labelEl.textContent = 'Select teams…';
+    labelEl.classList.add('placeholder');
+  } else {
+    labelEl.classList.remove('placeholder');
+    const trigger = document.getElementById('tk-teams-trigger');
+    if (trigger) {
+      const field = trigger.closest('.field');
+      if (field) markFieldValid(field, trigger);
+    }
+    const selectedNames = teams
+      .filter(t => selectedTaskTeamIds.includes(String(t.id)))
+      .map(t => t.name);
+    if (selectedNames.length <= 2) {
+      labelEl.textContent = selectedNames.join(', ');
+    } else {
+      labelEl.textContent = `${selectedNames.length} teams selected (${selectedNames[0]}, ${selectedNames[1]}…)`;
+    }
+  }
+}
+
+function onTaskTeamCheckboxChange(e) {
+  const val = String(e.target.value);
+  if (e.target.checked) {
+    if (!selectedTaskTeamIds.includes(val)) selectedTaskTeamIds.push(val);
+  } else {
+    selectedTaskTeamIds = selectedTaskTeamIds.filter(id => id !== val);
+  }
+  updateTaskTeamsTriggerLabel();
+  populateTaskEmpDD();
+}
+
+function selectAllTeams(select) {
+  const teams = Storage.getTeams();
+  if (select) {
+    selectedTaskTeamIds = teams.map(t => String(t.id));
+  } else {
+    selectedTaskTeamIds = [];
+  }
+  const checkboxes = document.querySelectorAll('#tk-teams-options input[type="checkbox"]');
+  checkboxes.forEach(cb => { cb.checked = select; });
+  updateTaskTeamsTriggerLabel();
+  populateTaskEmpDD();
+}
+
+function toggleTeamDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('tk-teams-dropdown');
+  if (!dd) return;
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+}
+
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('tk-teams-wrap');
+  const dd = document.getElementById('tk-teams-dropdown');
+  if (dd && wrap && !wrap.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
+
+function populateTaskEmpDD(currentEmpId) {
+  const sel = document.getElementById('tk-emp');
+  if (!sel) return;
+  const targetId = currentEmpId !== undefined ? currentEmpId : sel.value;
+  sel.innerHTML = '<option value="">Unassigned (All team members)</option>';
+  const employees = Storage.getEmployees();
+  
+  const pool = (selectedTaskTeamIds.length > 0)
+    ? employees.filter(e => e.status === 'active' && selectedTaskTeamIds.includes(String(e.teamId)))
+    : employees.filter(e => e.status === 'active');
+
+  pool.forEach(e => {
+    const o = document.createElement('option');
+    o.value = e.id;
+    const name = e.fullName || `${e.firstName || ''} ${e.lastName || ''}`.trim() || e.username;
+    o.textContent = name;
+    if (targetId && String(targetId) === String(e.id)) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function openAddTask() {
+  clearFormErrors('m-task');
+  document.getElementById('m-task-title').textContent = 'New Task';
+  document.getElementById('tk-id').value = '';
+  ['tk-title','tk-desc','tk-start','tk-due'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('tk-priority').value = 'medium';
+  document.getElementById('tk-status').value = 'pending';
+  selectedTaskTeamIds = [];
+  populateTaskTeamDD([]);
+  populateTaskEmpDD('');
+  document.getElementById('tk-saveBtn').textContent = 'Create Task';
+  const dd = document.getElementById('tk-teams-dropdown');
+  if (dd) dd.style.display = 'none';
+  openModal('m-task');
+}
+
+function saveTask() {
+  clearFormErrors('m-task');
+  const modal = document.getElementById('m-task');
+  if (!validateFormFields(modal)) return;
+
+  if (!selectedTaskTeamIds || selectedTaskTeamIds.length === 0) {
+    const trigger = document.getElementById('tk-teams-trigger');
+    if (trigger) {
+      const field = trigger.closest('.field');
+      if (field) markFieldInvalid(field, trigger, 'Please select at least one team.');
+    }
+    toast('Please select at least one team.', 'danger');
+    return;
+  }
+
+  const id     = document.getElementById('tk-id').value;
+  const title  = document.getElementById('tk-title').value.trim();
+  const empVal = document.getElementById('tk-emp').value;
+  const empId  = empVal ? empVal : null;
+
+  const tasks = Storage.getTasks();
+  const existing = id ? tasks.find(t => t.id == id) : null;
+  const teamStatuses = existing && existing.teamStatuses ? { ...existing.teamStatuses } : {};
+  const currentSt = document.getElementById('tk-status').value;
+  selectedTaskTeamIds.forEach(tid => {
+    if (!teamStatuses[tid]) teamStatuses[tid] = currentSt;
+  });
+
+  const taskData = {
+    title,
+    desc:         document.getElementById('tk-desc').value.trim(),
+    teamIds:      [...selectedTaskTeamIds],
+    teamId:       selectedTaskTeamIds[0] || null,
+    teamStatuses,
+    empId,
+    priority:     document.getElementById('tk-priority').value,
+    status:       currentSt,
+    startDate:    document.getElementById('tk-start').value,
+    dueDate:      document.getElementById('tk-due').value,
+  };
+
+  if (id) {
+    const idx = tasks.findIndex(t => t.id == id);
+    if (idx > -1) Object.assign(tasks[idx], taskData);
+    toast('Task updated!', 'success');
+  } else {
+    tasks.push({ id: Storage.nextId('ts_tkid'), ...taskData, createdAt: new Date().toISOString() });
+    toast('Task created!', 'success');
+  }
+  Storage.saveTasks(tasks);
+  closeModal('m-task');
+  renderTasks();
+  renderDashboard();
+  renderProgress();
+}
+
+function editTask(id, teamId) {
+  clearFormErrors('m-task');
+  const task = Storage.getTasks().find(t => t.id == id);
+  if (!task) return;
+  document.getElementById('m-task-title').textContent = 'Edit Task';
+  document.getElementById('tk-id').value       = task.id;
+  document.getElementById('tk-title').value    = task.title;
+  document.getElementById('tk-desc').value     = task.desc || '';
+  document.getElementById('tk-priority').value = task.priority || 'medium';
+  let taskSt = (teamId && task.teamStatuses && task.teamStatuses[teamId]) ? task.teamStatuses[teamId] : task.status;
+  if (taskSt === 'todo') taskSt = 'pending';
+  if (taskSt === 'done') taskSt = 'completed';
+  document.getElementById('tk-status').value   = taskSt || 'pending';
+  document.getElementById('tk-start').value    = task.startDate || '';
+  document.getElementById('tk-due').value      = task.dueDate || '';
+
+  const assignedTeamIds = Array.isArray(task.teamIds) && task.teamIds.length > 0
+    ? task.teamIds
+    : (task.teamId ? [task.teamId] : []);
+  populateTaskTeamDD(assignedTeamIds);
+  populateTaskEmpDD(task.empId);
+
+  document.getElementById('tk-saveBtn').textContent = 'Update Task';
+  const dd = document.getElementById('tk-teams-dropdown');
+  if (dd) dd.style.display = 'none';
+  openModal('m-task');
+}
+
+function deleteTask(id, teamId) {
+  const tasks = Storage.getTasks();
+  const t = tasks.find(x => x.id == id);
+  if (!t) return;
+  const assignedTeams = getTaskTeams(t, Storage.getTeams());
+  if (teamId !== undefined && teamId !== null && String(teamId) !== 'null' && assignedTeams.length > 1) {
+    const teamToDelete = assignedTeams.find(te => String(te.id) === String(teamId));
+    const teamName = teamToDelete ? teamToDelete.name : 'this team';
+    if (!confirm(`Delete this task for ${teamName}?`)) return;
+    if (Array.isArray(t.teamIds)) {
+      t.teamIds = t.teamIds.filter(tid => String(tid) !== String(teamId));
+    }
+    if (String(t.teamId) === String(teamId)) {
+      t.teamId = t.teamIds && t.teamIds.length ? t.teamIds[0] : null;
+    }
+    if (t.teamStatuses && t.teamStatuses[teamId]) {
+      delete t.teamStatuses[teamId];
+    }
+    Storage.saveTasks(tasks);
+    toast(`Task removed for ${teamName}.`, 'warning');
+  } else {
+    if (!confirm('Delete this task?')) return;
+    Storage.saveTasks(tasks.filter(x => x.id != id));
+    toast('Task deleted.', 'warning');
+  }
+  renderTasks();
+  renderDashboard();
+  renderProgress();
+}
+
+function viewTaskAdmin(id) {
+  const task = Storage.getTasks().find(t => t.id == id);
+  if (!task) return;
+  const emp  = Storage.getEmployees().find(e => e.id == task.empId);
+  const assignedTeam = getTaskAssignedTeam(task, Storage.getTeams(), Storage.getEmployees());
+  const overdue = isOverdue(task.dueDate) && task.status !== 'done';
+  const empName = emp ? (emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.username) : '';
+
+  document.getElementById('taskViewBody').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <span class="badge ${priorityClass(task.priority)}">${task.priority} priority</span>
+      <span class="badge ${statusClass(task.status)}">${statusLabel(task.status)}</span>
+      ${overdue ? '<span class="badge badge-danger">Overdue</span>' : ''}
+    </div>
+    <h3 style="font-size:1.05rem;margin-bottom:8px">${escapeHtml(task.title)}</h3>
+    ${task.desc ? `<p style="color:var(--text-2);font-size:.875rem;margin-bottom:14px">${escapeHtml(task.desc)}</p>` : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="background:var(--bg);border-radius:8px;padding:12px">
+        <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">Assigned To</div>
+        <div class="flex-center" style="min-width:0">
+          ${emp ? `<span style="font-size:.875rem;font-weight:600">${escapeHtml(empName)}</span>` : '<span class="text-muted">Unassigned</span>'}
+        </div>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:12px">
+        <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">Team</div>
+        <span style="font-size:.875rem;font-weight:600">${assignedTeam ? escapeHtml(assignedTeam.name) : '—'}</span>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:12px">
+        <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">Due Date</div>
+        <span style="font-size:.875rem;font-weight:600;color:${overdue ? 'var(--danger)' : 'inherit'}">${task.dueDate ? formatDate(task.dueDate) : '—'}</span>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:12px">
+        <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">Start Date</div>
+        <span style="font-size:.875rem;font-weight:600">${task.startDate ? formatDate(task.startDate) : '—'}</span>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="font-size:.78rem;font-weight:600;margin-bottom:8px">Update Status</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${['pending','inprogress','review','done'].map(s =>
+          `<button class="btn btn-sm ${task.status === s ? 'btn-primary' : 'btn-outline'}" onclick="quickUpdateTask(${task.id},'${s}')">${statusLabel(s)}</button>`
+        ).join('')}
+      </div>
+    </div>`;
+  openModal('m-taskview');
+}
+
+function quickUpdateTask(id, status) {
+  const tasks = Storage.getTasks();
+  const idx = tasks.findIndex(t => t.id == id);
+  if (idx > -1) { tasks[idx].status = status; Storage.saveTasks(tasks); }
+  closeModal('m-taskview');
+  toast(`Task moved to "${statusLabel(status)}"`, 'success');
+  renderTasks();
+  renderDashboard();
+  renderProgress();
+}
+
+function populateTaskFilters() {
+  const sel = document.getElementById('taskTeamF');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All Teams</option>';
+  Storage.getTeams().forEach(t => {
+    const o = document.createElement('option');
+    o.value = t.id; o.textContent = t.name;
+    sel.appendChild(o);
+  });
+  sel.value = current;
+}
+
+function changeTaskStatus(id, newStatus, teamId) {
+  const tasks = Storage.getTasks();
+  const t = tasks.find(x => x.id == id);
+  if (t) {
+    if (!t.teamStatuses) t.teamStatuses = {};
+    if (teamId !== undefined && teamId !== null && String(teamId) !== 'null') {
+      t.teamStatuses[teamId] = newStatus;
+    }
+    const assignedTeams = getTaskTeams(t, Storage.getTeams());
+    if (assignedTeams.length <= 1) {
+      t.status = newStatus;
+    }
+    Storage.saveTasks(tasks);
+    toast(`Status updated to "${statusLabel(newStatus)}"`, 'success');
+    renderTasks();
+    renderDashboard();
+    renderProgress();
+  }
+}
+
+function renderTasks() {
+  const q       = (document.getElementById('taskSearch')?.value || '').toLowerCase();
+  const statusF = document.getElementById('taskStatusF')?.value || '';
+  const teamF   = document.getElementById('taskTeamF')?.value || '';
+  const tasks   = Storage.getTasks();
+  const employees = Storage.getEmployees();
+  const teams   = Storage.getTeams();
+
+  // Split tasks: if a task is assigned to multiple teams, split each team into its own row
+  const rows = [];
+  tasks.forEach(t => {
+    const assignedTeams = getTaskTeams(t, teams);
+    if (assignedTeams.length > 0) {
+      assignedTeams.forEach(team => {
+        rows.push({ task: t, team });
+      });
+    } else {
+      rows.push({ task: t, team: null });
+    }
+  });
+
+  const filtered = rows.filter(({ task: t, team }) => {
+    const emp = employees.find(e => e.id == t.empId);
+    const empName = emp ? (emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.username).toLowerCase() : '';
+    const teamName = team ? team.name.toLowerCase() : '';
+    const rowStatus = (team && t.teamStatuses && t.teamStatuses[team.id]) ? t.teamStatuses[team.id] : (t.status || 'pending');
+
+    const matchStatus = !statusF || rowStatus === statusF
+        || (statusF === 'pending' && rowStatus === 'todo')
+        || (statusF === 'completed' && rowStatus === 'done')
+        || (statusF === 'done' && rowStatus === 'completed');
+
+    const matchTeam = !teamF || (team && String(team.id) === String(teamF));
+
+    const matchSearch = !q 
+        || t.title.toLowerCase().includes(q) 
+        || (t.desc && t.desc.toLowerCase().includes(q))
+        || empName.includes(q)
+        || teamName.includes(q);
+
+    return matchStatus && matchTeam && matchSearch;
+  });
+
+  const countHeader = document.getElementById('tasksCountHeader');
+  if (countHeader) countHeader.textContent = `All Tasks (${filtered.length})`;
+
+  const tbody = document.getElementById('tasksBody');
+  if (!tbody) return;
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="tbl-empty">${rows.length ? 'No tasks match filter.' : 'No tasks yet.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(({ task: t, team }) => {
+    const emp = employees.find(e => e.id == t.empId);
+    // If task is multi-team, associate assignee with their matching team row
+    const isEmpInThisTeam = emp && (!team || !emp.teamId || String(emp.teamId) === String(team.id) || !t.teamIds || t.teamIds.length <= 1);
+    const empName = emp ? (emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.username) : '';
+    const rowEmp = isEmpInThisTeam ? emp : null;
+
+    const rowStatus = (team && t.teamStatuses && t.teamStatuses[team.id]) ? t.teamStatuses[team.id] : (t.status || 'pending');
+    const overdue = isOverdue(t.dueDate) && rowStatus !== 'done' && rowStatus !== 'completed';
+    const teamDisplay = team
+      ? `<span class="team-pill">${escapeHtml(team.name)}</span>`
+      : '<span class="text-muted">—</span>';
+
+    return `<tr>
+      <td>
+        <div style="font-weight:700;color:#0f172a">${escapeHtml(t.title)}</div>
+        ${t.desc ? `<div style="font-size:.78rem;color:var(--text-2);margin-top:2px;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(t.desc)}">${escapeHtml(t.desc)}</div>` : ''}
+      </td>
+      <td>${teamDisplay}</td>
+      <td>${rowEmp ? `<span style="font-weight:600;color:#0f172a">${escapeHtml(empName)}</span>` : '<span class="badge-unassigned">Unassigned</span>'}</td>
+      <td><span class="badge ${priorityClass(t.priority)}" style="text-transform:capitalize">${t.priority}</span></td>
+      <td style="${overdue ? 'color:var(--danger);font-weight:600' : 'color:#475569'}">${t.dueDate ? formatDate(t.dueDate) : '—'}</td>
+      <td>
+        <select class="status-dropdown status-dd-${(rowStatus === 'completed' || rowStatus === 'done') ? 'completed' : (rowStatus || 'pending')}" onchange="changeTaskStatus(${t.id}, this.value, ${team ? team.id : 'null'})" title="Change task status">
+          <option value="pending" ${(rowStatus === 'pending' || rowStatus === 'todo') ? 'selected' : ''}>Pending</option>
+          <option value="inprogress" ${rowStatus === 'inprogress' ? 'selected' : ''}>In Progress</option>
+          <option value="completed" ${(rowStatus === 'completed' || rowStatus === 'done') ? 'selected' : ''}>Completed</option>
+        </select>
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="tbl-action-btn tbl-btn-edit" onclick="editTask(${t.id}, ${team ? team.id : 'null'})">Edit</button>
+          <button class="tbl-action-btn tbl-btn-del" onclick="deleteTask(${t.id}, ${team ? team.id : 'null'})">Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* =================== PROGRESS =================== */
+function renderProgress() {
+  const tasks = Storage.getTasks();
+  const employees = Storage.getEmployees();
+  const teams = Storage.getTeams();
+
+  const total = tasks.length;
+  const done  = tasks.filter(t => t.status === 'completed' || t.status === 'done').length;
+  const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  const pctEl = document.getElementById('overallPct');
+  if (pctEl) pctEl.textContent = `${pct}%`;
+  const barEl = document.getElementById('overallBar');
+  if (barEl) barEl.style.width = `${pct}%`;
+  const doneEl = document.getElementById('prog-done-count');
+  if (doneEl) doneEl.textContent = `${done} Done`;
+  const totalEl = document.getElementById('prog-total-count');
+  if (totalEl) totalEl.textContent = `${total} Total`;
+
+  // Team progress
+  const tpBody = document.getElementById('teamProgressBody');
+  if (tpBody) {
+    if (!teams.length) { tpBody.innerHTML = '<p class="text-muted" style="font-size:.875rem">No teams yet.</p>'; }
+    else {
+      tpBody.innerHTML = teams.map(team => {
+        const teamTasks = tasks.filter(t => taskBelongsToTeam(t, team.id));
+        const teamDone  = teamTasks.filter(t => {
+          const st = (t.teamStatuses && t.teamStatuses[team.id]) ? t.teamStatuses[team.id] : t.status;
+          return st === 'completed' || st === 'done';
+        }).length;
+        const tp = teamTasks.length > 0 ? Math.round((teamDone / teamTasks.length) * 100) : 0;
+        return `<div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:.875rem;font-weight:600">${escapeHtml(team.name)}</span>
+            <span style="font-size:.8rem;color:var(--text-2)">${teamDone} / ${teamTasks.length} tasks done</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="prog-wrap" style="flex:1;height:18px;border-radius:6px;position:relative;overflow:hidden">
+              <div class="prog-bar" style="width:${tp}%;height:100%;border-radius:6px;display:flex;align-items:center;justify-content:center">
+                ${tp >= 15 ? `<span style="font-size:.72rem;font-weight:800;color:#fff;letter-spacing:.02em">${tp}%</span>` : ''}
+              </div>
+            </div>
+            <span style="font-size:.95rem;font-weight:800;color:var(--primary);min-width:40px;text-align:right">${tp}%</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Employee perf
+  const epBody = document.getElementById('empPerfBody');
+  if (epBody) {
+    if (!employees.length) { epBody.innerHTML = '<tr><td colspan="5" class="tbl-empty">No employees yet.</td></tr>'; return; }
+    epBody.innerHTML = employees.map(emp => {
+      const empTasks = tasks.filter(t => t.empId == emp.id);
+      const empDone  = empTasks.filter(t => t.status === 'completed' || t.status === 'done').length;
+      const ep = empTasks.length > 0 ? Math.round((empDone / empTasks.length) * 100) : 0;
+      const team = teams.find(t => t.id == emp.teamId);
+      const empName = emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.username;
+      return `<tr>
+        <td><div class="flex-center"><div class="av av-sm">${initials(empName)}</div>${escapeHtml(empName)}</div></td>
+        <td>${team ? escapeHtml(team.name) : '—'}</td>
+        <td style="text-align:center;font-weight:700">${empTasks.length}</td>
+        <td style="text-align:center;font-weight:700;color:var(--success)">${empDone}</td>
+        <td style="min-width:120px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="prog-wrap" style="flex:1"><div class="prog-bar" style="width:${ep}%"></div></div>
+            <span style="font-size:.8rem;font-weight:700;color:var(--primary);width:36px">${ep}%</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+/* =================== DASHBOARD =================== */
+function renderDashboard() {
+  const teams = Storage.getTeams();
+  const employees = Storage.getEmployees();
+  const tasks = Storage.getTasks();
+  const done  = tasks.filter(t => t.status === 'completed' || t.status === 'done').length;
+  const pending = tasks.filter(t => t.status !== 'completed' && t.status !== 'done').length;
+
+  const sTeams = document.getElementById('s-teams');
+  if (sTeams) sTeams.textContent = teams.length;
+  const sEmp = document.getElementById('s-emp');
+  if (sEmp) sEmp.textContent = employees.length;
+  const sDone = document.getElementById('s-done');
+  if (sDone) sDone.textContent = done;
+  const sPend = document.getElementById('s-pending');
+  if (sPend) sPend.textContent = pending;
+
+  // Recent tasks
+  const rt = [...tasks].sort((a,b) => new Date(b.createdAt||0)-new Date(a.createdAt||0)).slice(0,5);
+  const rtEl = document.getElementById('d-recentTasks');
+  if (rtEl) {
+    if (!rt.length) { rtEl.innerHTML = '<div class="tbl-empty text-muted" style="padding:20px">No tasks yet.</div>'; }
+    else {
+      rtEl.innerHTML = rt.map(t => {
+        const emp = employees.find(e => e.id == t.empId);
+        const empName = emp ? (emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.username) : '';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg)">
+          <span class="badge ${priorityClass(t.priority)}" style="flex-shrink:0">${t.priority}</span>
+          <span style="flex:1;font-size:.875rem;font-weight:500">${escapeHtml(t.title)}</span>
+          ${emp ? `<span style="font-size:.8rem;color:var(--text-2);font-weight:500">${escapeHtml(empName)}</span>` : ''}
+          <span class="badge ${statusClass(t.status)}">${statusLabel(t.status)}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Teams summary
+  const tsEl = document.getElementById('d-teams');
+  if (tsEl) {
+    if (!teams.length) { tsEl.innerHTML = '<div class="tbl-empty text-muted" style="padding:20px">No teams yet.</div>'; }
+    else {
+      tsEl.innerHTML = teams.map(team => {
+        const mc = employees.filter(e => e.teamId == team.id).length;
+        const tc = tasks.filter(t => taskBelongsToTeam(t, team.id)).length;
+        const dc = tasks.filter(t => taskBelongsToTeam(t, team.id) && t.status === 'done').length;
+        const tp = tc > 0 ? Math.round((dc/tc)*100) : 0;
+        return `<div style="padding:8px 0;border-bottom:1px solid var(--bg)">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-weight:600;font-size:.875rem">${escapeHtml(team.name)}</span>
+            <span style="font-size:.8rem;color:var(--text-2)">${mc} members · ${tc} tasks</span>
+          </div>
+          <div class="prog-wrap" style="height:5px"><div class="prog-bar" style="width:${tp}%"></div></div>
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${tp}% complete</div>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+/* =================== TEAM LINKS =================== */
+let adminActiveCategory = 'all';
+let selectedLinkTeamIds = [];
+
+function escapeLinkHtml(value = '') {
+  return String(value).replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
+function safeTeamLinkUrl(rawUrl) {
+  try {
+    const trimmed = String(rawUrl || '').trim();
+    const url = new URL(trimmed);
+    return (url.protocol === 'https:' || url.protocol === 'http:') ? url.href : '';
+  } catch (_) { return ''; }
+}
+
+/* Category Filter Tabs */
+function renderAdminCategoryTabs() {
+  const container = document.getElementById('adminCategoryTabs');
+  if (!container) return;
+  const links = Storage.getLinks();
+  const categories = Storage.getLinkCategories();
+
+  const totalCount = links.length;
+  let tabsHtml = `
+    <button type="button" class="category-tab ${adminActiveCategory === 'all' ? 'active' : ''}" onclick="filterAdminCategory('all')">
+      <i class="fas fa-layer-group"></i>
+      <span>All Categories</span>
+      <span class="cat-count">${totalCount}</span>
+    </button>
+  `;
+
+  categories.forEach(cat => {
+    const count = links.filter(l => (l.category || '').toLowerCase() === cat.toLowerCase()).length;
+    const icon = getCategoryIcon(cat);
+    const isAct = adminActiveCategory !== 'all' && adminActiveCategory.toLowerCase() === cat.toLowerCase();
+    tabsHtml += `
+      <button type="button" class="category-tab ${isAct ? 'active' : ''}" onclick="filterAdminCategory('${escapeLinkHtml(cat)}')">
+        <i class="${icon}"></i>
+        <span>${escapeLinkHtml(cat)}</span>
+        <span class="cat-count">${count}</span>
+      </button>
+    `;
+  });
+
+  tabsHtml += `
+    <button type="button" class="category-tab add-cat-btn" onclick="openAddCategoryModal()" title="Add your own category">
+      <i class="fas fa-plus"></i>
+      <span>Add Category</span>
+    </button>
+  `;
+
+  container.innerHTML = tabsHtml;
+}
+
+function filterAdminCategory(cat) {
+  adminActiveCategory = cat;
+  renderAdminCategoryTabs();
+  renderTeamLinks();
+}
+
+/* Category Modal & Management */
+function populateAdminCategorySelect(selectedValue = '') {
+  const select = document.getElementById('link-category');
+  if (!select) return;
+  const categories = Storage.getLinkCategories();
+  let html = '<option value="">Select Category…</option>';
+  categories.forEach(cat => {
+    const isSel = selectedValue && selectedValue.toLowerCase() === cat.toLowerCase();
+    html += `<option value="${escapeLinkHtml(cat)}" ${isSel ? 'selected' : ''}>${escapeLinkHtml(cat)}</option>`;
+  });
+  html += '<option value="__custom__">+ Add New Category…</option>';
+  select.innerHTML = html;
+  if (selectedValue && !categories.some(c => c.toLowerCase() === selectedValue.toLowerCase())) {
+    const opt = document.createElement('option');
+    opt.value = selectedValue;
+    opt.textContent = selectedValue;
+    opt.selected = true;
+    select.insertBefore(opt, select.lastElementChild);
+  }
+}
+
+function toggleModalInlineCategory(scope, show) {
+  const row = document.getElementById('admin-inline-category-row');
+  const input = document.getElementById('admin-inline-category-name');
+  if (!row) return;
+  if (show === undefined) show = row.style.display === 'none';
+  row.style.display = show ? 'block' : 'none';
+  if (show && input) {
+    input.value = '';
+    setTimeout(() => input.focus(), 50);
+  }
+}
+
+function onCategorySelectChange(scope, val) {
+  if (val === '__custom__') {
+    toggleModalInlineCategory(scope, true);
+  } else {
+    toggleModalInlineCategory(scope, false);
+  }
+}
+
+function saveModalInlineCategory(scope) {
+  const input = document.getElementById('admin-inline-category-name');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) {
+    toast('Please enter a category name.', 'danger');
+    input.focus();
+    return;
+  }
+  const res = Storage.addLinkCategory(val);
+  if (!res.success) {
+    toast(res.message, 'danger');
+    input.focus();
+    return;
+  }
+  toast(`Category "${res.category}" created!`, 'success');
+  populateAdminCategorySelect(res.category);
+  toggleModalInlineCategory(scope, false);
+  renderAdminCategoryTabs();
+}
+
+function openAddCategoryModal() {
+  const input = document.getElementById('new-category-name');
+  if (input) input.value = '';
+  renderCategoryChips();
+  openModal('m-category');
+  if (input) setTimeout(() => input.focus(), 80);
+}
+
+function renderCategoryChips() {
+  const container = document.getElementById('categoryChipsList');
+  if (!container) return;
+  const categories = Storage.getLinkCategories();
+  const links = Storage.getLinks();
+
+  container.innerHTML = categories.map(cat => {
+    const icon = getCategoryIcon(cat);
+    const count = links.filter(l => (l.category || '').toLowerCase() === cat.toLowerCase()).length;
+    return `
+      <div class="cat-chip" title="${count} link(s) in this category">
+        <i class="${icon} cat-icon"></i>
+        <span>${escapeLinkHtml(cat)}</span>
+        <span style="font-size:10px;opacity:.7">(${count})</span>
+        <button type="button" class="cat-remove-btn" onclick="deleteCategory('${escapeLinkHtml(cat)}')" title="Remove category">×</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function submitNewCategory() {
+  const input = document.getElementById('new-category-name');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) {
+    toast('Please enter a category name.', 'danger');
+    input.focus();
+    return;
+  }
+  const res = Storage.addLinkCategory(val);
+  if (!res.success) {
+    toast(res.message, 'danger');
+    input.focus();
+    return;
+  }
+  toast(`Category "${res.category}" added successfully!`, 'success');
+  input.value = '';
+  renderCategoryChips();
+  renderAdminCategoryTabs();
+  populateAdminCategorySelect();
+  renderTeamLinks();
+}
+
+function deleteCategory(catName) {
+  const links = Storage.getLinks();
+  const usingCount = links.filter(l => (l.category || '').toLowerCase() === catName.toLowerCase()).length;
+  let confirmMsg = `Remove category "${catName}"?`;
+  if (usingCount > 0) {
+    confirmMsg += ` ${usingCount} link(s) currently use this category and will be moved to "Other".`;
+  }
+  if (!confirm(confirmMsg)) return;
+
+  if (usingCount > 0) {
+    links.forEach(l => {
+      if ((l.category || '').toLowerCase() === catName.toLowerCase()) {
+        l.category = 'Other';
+      }
+    });
+    Storage.saveLinks(links);
+  }
+
+  Storage.deleteLinkCategory(catName);
+  if (adminActiveCategory.toLowerCase() === catName.toLowerCase()) {
+    adminActiveCategory = 'all';
+  }
+  toast(`Category "${catName}" removed.`, 'success');
+  renderCategoryChips();
+  renderAdminCategoryTabs();
+  populateAdminCategorySelect();
+  renderTeamLinks();
+}
+
+/* Multi-Team Dropdown for Link */
+function populateLinkTeamDD(selectedIds = []) {
+  selectedLinkTeamIds = selectedIds.map(String);
+  const teams = Storage.getTeams();
+  const optionsContainer = document.getElementById('link-teams-options');
+  if (!optionsContainer) return;
+
+  if (!teams.length) {
+    optionsContainer.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--text-muted);text-align:center">No teams available</div>';
+  } else {
+    optionsContainer.innerHTML = teams.map(t => {
+      const isChecked = selectedLinkTeamIds.includes(String(t.id));
+      return `
+        <label class="ms-option-label" onclick="event.stopPropagation()">
+          <input type="checkbox" value="${t.id}" ${isChecked ? 'checked' : ''} onchange="onLinkTeamCheckboxChange(event)" />
+          <span>${escapeLinkHtml(t.name)}</span>
+        </label>
+      `;
+    }).join('');
+  }
+  updateLinkTeamsTriggerLabel();
+}
+
+function updateLinkTeamsTriggerLabel() {
+  const teams = Storage.getTeams();
+  const labelEl = document.getElementById('link-teams-label');
+  if (!labelEl) return;
+
+  if (selectedLinkTeamIds.length === 0) {
+    labelEl.textContent = 'Select teams…';
+    labelEl.classList.add('placeholder');
+  } else {
+    labelEl.classList.remove('placeholder');
+    const selectedNames = teams
+      .filter(t => selectedLinkTeamIds.includes(String(t.id)))
+      .map(t => t.name);
+    if (selectedNames.length <= 2) {
+      labelEl.textContent = selectedNames.join(', ');
+    } else {
+      labelEl.textContent = `${selectedNames.length} teams selected (${selectedNames[0]}, ${selectedNames[1]}…)`;
+    }
+  }
+}
+
+function toggleLinkTeamDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('link-teams-dropdown');
+  if (!dd) return;
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+}
+
+function selectAllLinkTeams(select) {
+  const teams = Storage.getTeams();
+  if (select) {
+    selectedLinkTeamIds = teams.map(t => String(t.id));
+  } else {
+    selectedLinkTeamIds = [];
+  }
+  const checkboxes = document.querySelectorAll('#link-teams-options input[type="checkbox"]');
+  checkboxes.forEach(cb => { cb.checked = select; });
+  updateLinkTeamsTriggerLabel();
+  const wrap = document.getElementById('link-teams-wrap');
+  if (wrap) {
+    wrap.closest('.field')?.classList.remove('inp-error');
+    wrap.closest('.field')?.querySelectorAll('.field-error-msg').forEach(el => el.remove());
+  }
+}
+
+function onLinkTeamCheckboxChange(e) {
+  const val = String(e.target.value);
+  if (e.target.checked) {
+    if (!selectedLinkTeamIds.includes(val)) selectedLinkTeamIds.push(val);
+  } else {
+    selectedLinkTeamIds = selectedLinkTeamIds.filter(id => id !== val);
+  }
+  updateLinkTeamsTriggerLabel();
+  const wrap = document.getElementById('link-teams-wrap');
+  if (wrap && selectedLinkTeamIds.length > 0) {
+    wrap.closest('.field')?.classList.remove('inp-error');
+    wrap.closest('.field')?.querySelectorAll('.field-error-msg').forEach(el => el.remove());
+  }
+}
+
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('link-teams-wrap');
+  const dd = document.getElementById('link-teams-dropdown');
+  if (dd && wrap && !wrap.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
+
+/* Modal Controls */
+function openAddLinkModal() {
+  clearFormErrors('m-link');
+  toggleModalInlineCategory('admin', false);
+  document.getElementById('m-link-title').textContent = 'Add Link';
+  document.getElementById('link-id').value = '';
+  document.getElementById('link-title').value = '';
+  document.getElementById('link-description').value = '';
+  document.getElementById('link-url').value = '';
+  populateAdminCategorySelect(adminActiveCategory !== 'all' ? adminActiveCategory : '');
+  document.getElementById('link-saveBtn').textContent = 'Save';
+  const dd = document.getElementById('link-teams-dropdown');
+  if (dd) dd.style.display = 'none';
+  populateLinkTeamDD([]);
+  openModal('m-link');
+}
+
+function editTeamLink(id) {
+  clearFormErrors('m-link');
+  toggleModalInlineCategory('admin', false);
+  const link = Storage.getLinks().find(item => item.id == id);
+  if (!link) { toast('Team link not found.', 'danger'); return; }
+  document.getElementById('m-link-title').textContent = 'Edit Link';
+  document.getElementById('link-id').value = link.id;
+  document.getElementById('link-title').value = link.title || '';
+  document.getElementById('link-description').value = link.description || '';
+  document.getElementById('link-url').value = link.url || '';
+  populateAdminCategorySelect(link.category || 'Other');
+  document.getElementById('link-saveBtn').textContent = 'Save';
+
+  const assignedTeamIds = Array.isArray(link.teamIds) && link.teamIds.length > 0
+    ? link.teamIds.map(String)
+    : (link.teamId ? [String(link.teamId)] : []);
+  populateLinkTeamDD(assignedTeamIds);
+  const dd = document.getElementById('link-teams-dropdown');
+  if (dd) dd.style.display = 'none';
+  openModal('m-link');
+}
+
+function saveTeamLink() {
+  clearFormErrors('m-link');
+  const modal = document.getElementById('m-link');
+  if (!validateFormFields(modal)) return;
+
+  const title = document.getElementById('link-title').value.trim();
+  const description = document.getElementById('link-description').value.trim();
+  const rawUrl = document.getElementById('link-url').value.trim();
+  const category = document.getElementById('link-category').value;
+  const idValue = document.getElementById('link-id').value;
+
+  if (selectedLinkTeamIds.length === 0) {
+    const trigger = document.getElementById('link-teams-trigger');
+    const field = trigger ? trigger.closest('.field') : null;
+    if (field) markFieldInvalid(field, trigger, 'Please select at least one team.');
+    toast('Please select at least one team.', 'danger');
+    return;
+  }
+
+  const url = safeTeamLinkUrl(rawUrl);
+  if (!url) {
+    const urlInput = document.getElementById('link-url');
+    const field = urlInput ? urlInput.closest('.field') : null;
+    if (field) markFieldInvalid(field, urlInput, 'Please enter a valid URL (http:// or https://).');
+    toast('Please enter a valid URL (http:// or https://).', 'danger');
+    return;
+  }
+
+  const links = Storage.getLinks();
+  const linkData = {
+    title,
+    description,
+    url,
+    category,
+    teamIds: [...selectedLinkTeamIds],
+    teamId: selectedLinkTeamIds[0] || null,
+  };
+
+  if (idValue) {
+    const index = links.findIndex(l => l.id == idValue);
+    if (index < 0) { toast('Link not found.', 'danger'); return; }
+    links[index] = { ...links[index], ...linkData, updatedAt: new Date().toISOString() };
+    toast('Team link updated successfully.', 'success');
+  } else {
+    links.push({ id: Storage.nextId('ts_lid'), ...linkData, createdAt: new Date().toISOString() });
+    toast('Team link saved successfully.', 'success');
+  }
+
+  Storage.saveLinks(links);
+  closeModal('m-link');
+  renderAdminCategoryTabs();
+  renderTeamLinks();
+}
+
+function deleteTeamLink(id) {
+  const link = Storage.getLinks().find(item => item.id == id);
+  if (!link) return;
+  if (!confirm(`Delete the link "${link.title}"?`)) return;
+  Storage.saveLinks(Storage.getLinks().filter(item => item.id != id));
+  renderAdminCategoryTabs();
+  renderTeamLinks();
+  toast('Team link deleted.', 'success');
+}
+
+function renderTeamLinks() {
+  const tbody = document.getElementById('teamLinksBody');
+  if (!tbody) return;
+  const teams = Storage.getTeams();
+  const query = (document.getElementById('linkSearch')?.value || '').trim().toLowerCase();
+  const allLinks = Storage.getLinks();
+
+  const titleEl = document.getElementById('adminLinksTitle');
+  if (titleEl) {
+    titleEl.textContent = adminActiveCategory === 'all' ? 'All Links' : `${adminActiveCategory} Links`;
+  }
+
+  const links = allLinks.filter(link => {
+    if (adminActiveCategory !== 'all' && link.category !== adminActiveCategory) {
+      return false;
+    }
+    const linkTeams = getLinkTeams(link, teams);
+    const haystack = [link.title, link.url, link.description, link.category, ...linkTeams.map(t => t.name)].join(' ').toLowerCase();
+    return haystack.includes(query);
+  }).sort((a, b) => String(a.title || '').localeCompare(String(b.title || '')));
+
+  if (!links.length) {
+    const emptyMsg = query
+      ? 'No matching links found.'
+      : (adminActiveCategory === 'all' ? 'No links saved yet. Click Add Link above.' : `No links found in category "${adminActiveCategory}".`);
+    tbody.innerHTML = `<tr><td colspan="5" class="tbl-empty">${emptyMsg}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = links.map(link => {
+    const linkTeams = getLinkTeams(link, teams);
+    const safeUrl = safeTeamLinkUrl(link.url);
+    const catIcon = getCategoryIcon(link.category);
+    const openLink = safeUrl
+      ? `<a class="team-link-name" href="${escapeLinkHtml(safeUrl)}" target="_blank" rel="noopener noreferrer">${escapeLinkHtml(link.title)} <i class="fas fa-arrow-up-right-from-square"></i></a>`
+      : `<span style="font-weight:600">${escapeLinkHtml(link.title)}</span>`;
+
+    const teamsHtml = linkTeams.length
+      ? `<div class="team-tags-wrap">${linkTeams.map(t => `<span class="team-tag">${escapeLinkHtml(t.name)}</span>`).join('')}</div>`
+      : '<span class="text-muted">No team assigned</span>';
+
+    return `<tr>
+      <td>
+        <div class="team-link-cell">
+          ${openLink}
+          <div class="team-link-url">${escapeLinkHtml(link.url || '')}</div>
+        </div>
+      </td>
+      <td>
+        <span class="badge badge-muted"><i class="${catIcon}"></i> ${escapeLinkHtml(link.category || 'Other')}</span>
+      </td>
+      <td>${teamsHtml}</td>
+      <td style="max-width:240px;color:var(--text-2);font-size:.85rem">${escapeLinkHtml(link.description || '—')}</td>
+      <td>
+        <div class="team-link-actions">
+          ${safeUrl ? `<a class="btn btn-outline btn-sm" href="${escapeLinkHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" title="Open Link"><i class="fas fa-arrow-up-right-from-square"></i> Open</a>` : ''}
+          <button type="button" class="btn btn-outline btn-sm" onclick="editTeamLink(${Number(link.id)})" aria-label="Edit link"><i class="fas fa-pen"></i> Edit</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="deleteTeamLink(${Number(link.id)})" aria-label="Delete link"><i class="fas fa-trash"></i> Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* =================== SETTINGS =================== */
+function saveAdminCreds() {
+  const newUser = document.getElementById('newUsername').value.trim();
+  const newPass = document.getElementById('newPassword').value.trim();
+  const confirm = document.getElementById('confirmPassword').value.trim();
+  if (!newUser && !newPass) { toast('Enter at least a new username or password.', 'warning'); return; }
+  if (newPass && newPass !== confirm) { toast('Passwords do not match.', 'danger'); return; }
+  const current = Storage.getAdminCreds();
+  if (newUser) current.username = newUser;
+  if (newPass) current.password = newPass;
+  Storage.setAdminCreds(current);
+  updateAdminUI();
+  document.getElementById('newUsername').value = '';
+  document.getElementById('newPassword').value = '';
+  document.getElementById('confirmPassword').value = '';
+  toast('Credentials updated! Please remember your new login details.', 'success');
+}
+
+function purgeDemoDataManual() {
+  if (typeof Storage.removeDemoData === 'function') {
+    Storage.removeDemoData();
+  }
+  renderDashboard();
+  renderTeams();
+  renderEmployees();
+  renderTasks();
+  if (typeof renderTeamLinks === 'function') renderTeamLinks();
+  if (typeof renderAdminCategoryTabs === 'function') renderAdminCategoryTabs();
+  if (typeof populateLinkTeams === 'function') populateLinkTeams();
+  if (typeof populateTaskFilters === 'function') populateTaskFilters();
+  toast('Demo details removed! Only your custom details are visible.', 'success');
+}
+
+function updateAdminUI() {
+  const creds = Storage.getAdminCreds();
+  const nameEl = document.getElementById('adminName');
+  const avEl   = document.getElementById('adminAvatar');
+  const topAv  = document.getElementById('topbarAv');
+  if (nameEl) nameEl.textContent = creds.username;
+  const av = initials(creds.username);
+  if (avEl) avEl.textContent = av;
+  if (topAv) topAv.textContent = av;
+}
+
+/* =================== PHONE VALIDATION LISTENERS =================== */
+function handlePhoneInput(el) {
+  if (!el) return;
+  const raw = el.value;
+  // If first character entered is not 6, 7, 8, or 9
+  if (raw.length > 0 && !['6', '7', '8', '9'].includes(raw[0])) {
+    showFieldError('e-phone', 'Phone number must start with 6, 7, 8, or 9.');
+    el.value = '';
+    return;
+  }
+  // Strip non-digits and slice to 10
+  const clean = raw.replace(/\D/g, '').slice(0, 10);
+  el.value = clean;
+  const field = el.closest('.field');
+  if (clean.length === 10) {
+    if (field) markFieldValid(field, el);
+  } else if (clean.length > 0) {
+    const err = field ? field.querySelector('.field-error-msg') : null;
+    if (err && err.textContent.includes('start with')) {
+      markFieldValid(field, el);
+    }
+  }
+}
+
+const phoneFieldInput = document.getElementById('e-phone');
+if (phoneFieldInput) {
+  // Prevent invalid first digits (such as 3 or 4) on keydown directly
+  phoneFieldInput.addEventListener('keydown', function(e) {
+    // Allow control / navigation keys
+    if (e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.ctrlKey || e.metaKey) {
+      return;
+    }
+    // If the input is currently empty and a digit is pressed
+    if (this.value.length === 0 && /^[0-9]$/.test(e.key)) {
+      if (!['6', '7', '8', '9'].includes(e.key)) {
+        e.preventDefault();
+        showFieldError('e-phone', 'Phone number must start with 6, 7, 8, or 9.');
+        return;
+      }
+    }
+    // Prevent any non-numeric key
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+    }
+  });
+
+  phoneFieldInput.addEventListener('input', function() {
+    handlePhoneInput(this);
+  });
+
+  phoneFieldInput.addEventListener('blur', function() {
+    const val = this.value.replace(/\D/g, '');
+    const field = this.closest('.field');
+    if (!val) return;
+    if (!/^[6-9]/.test(val)) {
+      showFieldError('e-phone', 'Phone number must start with 6, 7, 8, or 9.');
+    } else if (val.length < 10) {
+      showFieldError('e-phone', 'Please enter 10 numbers.');
+    } else {
+      if (field) markFieldValid(field, this);
+    }
+  });
+}
+
+/* =================== INIT =================== */
+initLiveClock('liveClock');
+updateAdminUI();
+renderDashboard();
+</script>
+</body>
+</html>

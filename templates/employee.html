@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TLMS Portal – Employee Portal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='shared.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body class="app-body">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <span>TLMS Portal</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="nav-link active" data-page="mytasks">
+      <i class="fas fa-tasks"></i> My Tasks
+    </a>
+    <a class="nav-link" data-page="progress">
+      <i class="fas fa-chart-bar"></i> My Progress
+    </a>
+    <a class="nav-link" data-page="links">
+      <i class="fas fa-link"></i> Team Links
+    </a>
+    <a class="nav-link" data-page="report">
+      <i class="fas fa-file-alt"></i> Task Report
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-badge">
+      <div class="ub-avatar" id="empAvatar">?</div>
+      <div class="ub-info">
+        <div class="ub-name" id="empName">Employee</div>
+        <div class="ub-role" id="empRole">—</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+  </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<div class="main-area">
+  <header class="topbar">
+    <span class="topbar-title" id="topbarTitle">My Tasks</span>
+    <div class="topbar-right">
+      <div class="live-clock" id="liveClock" title="Current system time">
+        <i class="fas fa-clock"></i>
+        <span class="clock-time">--</span>
+      </div>
+      <span style="font-size:.8rem;color:var(--text-2)" id="topbarTeam"></span>
+      <div class="av av-sm" id="topbarAv" style="background:var(--primary)">?</div>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- ============ MY TASKS ============ -->
+    <section class="page active" id="page-mytasks">
+      <div class="page-header">
+        <div>
+          <h2>My Tasks</h2>
+          <p id="taskSubtitle">Tasks assigned to you by admin.</p>
+        </div>
+        <!-- Status filter -->
+        <select class="inp" style="max-width:160px" id="empStatusF" onchange="renderMyTasks()">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="inprogress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+
+      <!-- Stat mini cards -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+        <div class="stat-card"><div class="stat-icon"><i class="fas fa-list"></i></div><div><div class="stat-val" id="my-total">0</div><div class="stat-lbl">Total</div></div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fas fa-spinner"></i></div><div><div class="stat-val" id="my-ip">0</div><div class="stat-lbl">In Progress</div></div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div><div class="stat-val" id="my-done">0</div><div class="stat-lbl">Done</div></div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div><div class="stat-val" id="my-over">0</div><div class="stat-lbl">Overdue</div></div></div>
+      </div>
+
+      <!-- Task Cards -->
+      <div id="myTasksGrid" style="display:flex;flex-direction:column;gap:12px"></div>
+    </section>
+
+    <!-- ============ MY PROGRESS ============ -->
+    <section class="page" id="page-progress">
+      <div class="page-header">
+        <div><h2>My Progress</h2><p>Your task completion overview.</p></div>
+      </div>
+
+      <!-- Big progress -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><i class="fas fa-chart-pie"></i> Overall Completion</div>
+        <div style="display:flex;align-items:center;gap:32px;flex-wrap:wrap">
+          <div style="text-align:center">
+            <div style="font-size:3rem;font-weight:800;color:var(--primary);line-height:1" id="myPct">0%</div>
+            <div style="font-size:.85rem;color:var(--text-2);margin-top:4px">Completed</div>
+          </div>
+          <div style="flex:1;min-width:200px">
+            <div class="prog-wrap" style="height:16px;border-radius:999px">
+              <div class="prog-bar" id="myProgBar" style="width:0%;border-radius:999px"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.82rem;color:var(--text-2)">
+              <span id="my-prog-done">0 Done</span>
+              <span id="my-prog-total">0 Total</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breakdown by status -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><i class="fas fa-chart-bar"></i> Status Breakdown</div>
+        <div id="myBreakdown" style="display:flex;flex-direction:column;gap:14px"></div>
+      </div>
+
+      <!-- Priority breakdown -->
+      <div class="card">
+        <div class="card-title"><i class="fas fa-flag"></i> Tasks by Priority</div>
+        <div id="myPriorityBreakdown" style="display:flex;flex-direction:column;gap:14px"></div>
+      </div>
+    </section>
+
+    <!-- ============ TEAM LINKS ============ -->
+    <section class="page" id="page-links">
+      <div class="page-header">
+        <div>
+          <h2>Team Links</h2>
+          <p>Useful links shared with your team.</p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline" onclick="openEmpAddCategoryModal()">
+            <i class="fas fa-folder-plus"></i> Add Category
+          </button>
+          <button class="btn btn-primary" onclick="openEmpAddLinkModal()">
+            <i class="fas fa-plus"></i> Add Link
+          </button>
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="category-tabs" id="empCategoryTabs"></div>
+
+      <div id="empTeamLinks" class="team-link-card-grid">
+        <div class="empty-state"><i class="fas fa-link"></i><h4>No team links yet</h4><p>Links shared with your team will appear here.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ TASK REPORT ============ -->
+    <section class="page" id="page-report">
+      <div class="page-header">
+        <div><h2>Task Report</h2><p>Detailed view of all your tasks.</p></div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Start Date</th>
+              <th>Due Date</th>
+              <th>Team</th>
+            </tr>
+          </thead>
+          <tbody id="reportBody">
+            <tr><td colspan="7" class="tbl-empty">No tasks assigned to you yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== MODAL: Task View ===== -->
+<div class="modal-overlay" id="m-empTask">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3><i class="fas fa-info-circle"></i> Task Detail</h3>
+      <button class="modal-close" onclick="closeModal('m-empTask')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="empTaskBody"></div>
+    <div class="modal-ft">
+      <button class="btn btn-outline" onclick="closeModal('m-empTask')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Add Team Link (Employee) ===== -->
+<div class="modal-overlay" id="m-empLink">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3><i class="fas fa-link"></i> <span id="m-empLink-title">Add Link</span></h3>
+      <button class="modal-close" onclick="closeModal('m-empLink')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="emp-link-id" />
+
+      <!-- Title -->
+      <div class="field">
+        <label for="emp-link-title">Title <span class="req">*</span></label>
+        <input type="text" class="inp" id="emp-link-title" placeholder="Enter the title of the link" required maxlength="120" />
+      </div>
+
+      <!-- Description -->
+      <div class="field">
+        <label for="emp-link-description">Description</label>
+        <textarea class="inp" id="emp-link-description" rows="2" maxlength="300" placeholder="Enter a description of the link"></textarea>
+      </div>
+
+      <!-- URL -->
+      <div class="field">
+        <label for="emp-link-url">URL <span class="req">*</span></label>
+        <input type="url" class="inp" id="emp-link-url" placeholder="Enter website URL (e.g. https://...)" required />
+      </div>
+
+      <!-- Category -->
+      <div class="field">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <label for="emp-link-category" style="margin-bottom:0">Category <span class="req">*</span></label>
+          <button type="button" class="btn-category-action" onclick="toggleEmpModalInlineCategory(true)">
+            <i class="fas fa-plus-circle"></i> Add New Category
+          </button>
+        </div>
+        <select class="inp" id="emp-link-category" required onchange="onEmpCategorySelectChange(this.value)">
+          <option value="">Select Category…</option>
+        </select>
+        <div id="emp-inline-category-row" class="inline-category-row" style="display:none">
+          <label style="font-size:12px;font-weight:600;margin-bottom:4px;display:block">Create New Category:</label>
+          <div style="display:flex;gap:6px">
+            <input type="text" class="inp" id="emp-inline-category-name" placeholder="Enter category name…" maxlength="40" style="min-height:36px;padding:6px 10px" onkeydown="if(event.key==='Enter'){event.preventDefault();saveEmpModalInlineCategory();}" />
+            <button type="button" class="btn btn-primary btn-sm" onclick="saveEmpModalInlineCategory()" style="min-height:36px;white-space:nowrap">Add</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleEmpModalInlineCategory(false)" style="min-height:36px">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Share Links with Team Members -->
+      <div class="field" style="position:relative">
+        <label>Share with Teams <span class="req">*</span></label>
+        <div class="multi-select-wrap" id="emp-link-teams-wrap">
+          <div class="inp multi-select-trigger" id="emp-link-teams-trigger" onclick="toggleEmpLinkTeamDropdown(event)" tabindex="0">
+            <span id="emp-link-teams-label" class="multi-select-label placeholder">Select teams…</span>
+            <i class="fas fa-chevron-down" style="font-size:11px;color:#777;margin-left:auto"></i>
+          </div>
+          <div class="multi-select-dropdown" id="emp-link-teams-dropdown" style="display:none">
+            <div class="multi-select-actions">
+              <button type="button" class="ms-btn" onclick="selectAllEmpLinkTeams(true)">Select All</button>
+              <button type="button" class="ms-btn" onclick="selectAllEmpLinkTeams(false)">Clear</button>
+            </div>
+            <div id="emp-link-teams-options" class="multi-select-options">
+              <!-- Checkboxes populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-outline" onclick="closeModal('m-empLink')">Cancel</button>
+      <button class="btn btn-primary" id="emp-link-saveBtn" onclick="saveEmpTeamLink()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Employee Add Category ===== -->
+<div class="modal-overlay" id="m-empCategory">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hd">
+      <h3><i class="fas fa-folder-plus"></i> <span>Manage & Add Categories</span></h3>
+      <button class="modal-close" onclick="closeModal('m-empCategory')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="emp-new-category-name">New Category Name <span class="req">*</span></label>
+        <div style="display:flex;gap:8px">
+          <input type="text" class="inp" id="emp-new-category-name" placeholder="e.g. Jira, Figma, Docs" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();submitEmpNewCategory();}" />
+          <button type="button" class="btn btn-primary" onclick="submitEmpNewCategory()" style="white-space:nowrap">
+            <i class="fas fa-plus"></i> Add
+          </button>
+        </div>
+        <p class="text-muted" style="font-size:12px;margin-top:6px">Create custom categories to organize team links.</p>
+      </div>
+
+      <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <label style="font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:0">Existing Categories</label>
+          <span style="font-size:11px;color:var(--text-muted)">Click × to remove</span>
+        </div>
+        <div id="empCategoryChipsList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-outline" onclick="closeModal('m-empCategory')">Done</button>
+    </div>
+  </div>
+</div>
+
+
+<script>window.TLMS_INITIAL_STATE = {{ initial_state|tojson }};</script>
+  <script src="{{ url_for('static', filename='data.js') }}"></script>
+<script>
+/* =================== AUTH =================== */
+requireAuth('employee');
+
+const empId = sessionStorage.getItem('empId');
+const currentEmp = Storage.getEmployees().find(e => e.id == empId);
+if (!currentEmp) logout();
+
+/* =================== INIT UI =================== */
+function initEmpUI() {
+  const fullName = currentEmp.fullName || `${currentEmp.firstName || ''} ${currentEmp.lastName || ''}`.trim() || currentEmp.username || 'Employee';
+  const av = initials(fullName);
+  document.getElementById('empName').textContent   = fullName;
+  document.getElementById('empRole').textContent   = currentEmp.role || 'Employee';
+  document.getElementById('empAvatar').textContent = av;
+  document.getElementById('topbarAv').textContent  = av;
+
+  const team = Storage.getTeams().find(t => t.id == currentEmp.teamId);
+  document.getElementById('topbarTeam').textContent = team ? team.name : '';
+}
+initEmpUI();
+
+/* =================== NAV =================== */
+function navigate(page) {
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.page === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === `page-${page}`));
+  document.getElementById('topbarTitle').textContent = {
+    mytasks: 'My Tasks', progress: 'My Progress', links: 'Team Links', report: 'Task Report'
+  }[page] || page;
+  if (page === 'mytasks')  renderMyTasks();
+  if (page === 'progress') renderMyProgress();
+  if (page === 'links')    { renderEmpCategoryTabs(); renderMyTeamLinks(); }
+  if (page === 'report')   renderReport();
+}
+
+document.querySelectorAll('.nav-link').forEach(l => {
+  l.addEventListener('click', e => { e.preventDefault(); navigate(l.dataset.page); });
+});
+
+/* =================== GET MY TASKS =================== */
+function getMyTasks() {
+  return Storage.getTasks().filter(t => {
+    if (t.empId && String(t.empId) === String(empId)) return true;
+    if (!t.empId && currentEmp && currentEmp.teamId && taskBelongsToTeam(t, currentEmp.teamId)) return true;
+    return false;
+  });
+}
+
+/* =================== MY TASKS =================== */
+function renderMyTasks() {
+  const statusF = document.getElementById('empStatusF').value;
+  const all     = getMyTasks();
+  const filtered = statusF ? all.filter(t => t.status === statusF
+    || (statusF === 'pending' && t.status === 'todo')
+    || (statusF === 'completed' && t.status === 'done')
+    || (statusF === 'done' && t.status === 'completed')) : all;
+
+  // Stats
+  document.getElementById('my-total').textContent = all.length;
+  document.getElementById('my-ip').textContent    = all.filter(t => t.status === 'inprogress').length;
+  document.getElementById('my-done').textContent  = all.filter(t => t.status === 'completed' || t.status === 'done').length;
+  document.getElementById('my-over').textContent  = all.filter(t => isOverdue(t.dueDate) && t.status !== 'completed' && t.status !== 'done').length;
+
+  const grid = document.getElementById('myTasksGrid');
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><i class="fas fa-tasks"></i><h4>No tasks ${statusF ? 'with this status' : 'assigned yet'}</h4><p>Check back later or contact your admin.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(t => {
+    const assignedTeams = getTaskTeams(t, Storage.getTeams());
+    const isCompleted = t.status === 'completed' || t.status === 'done';
+    const overdue = isOverdue(t.dueDate) && !isCompleted;
+    const teamBadges = assignedTeams.map(te => `<span class="badge badge-muted">${escapeEmpLinkHtml(te.name)}</span>`).join(' ');
+
+    return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+            <span class="badge ${priorityClass(t.priority)}">${t.priority} priority</span>
+            <span class="badge ${statusClass(t.status)}">${statusLabel(t.status)}</span>
+            ${overdue ? '<span class="badge badge-danger">Overdue</span>' : ''}
+            ${teamBadges}
+          </div>
+          <h3 style="font-size:1rem;font-weight:700;margin-bottom:6px">${t.title}</h3>
+          ${t.desc ? `<p style="font-size:.875rem;color:var(--text-2);line-height:1.5">${t.desc}</p>` : ''}
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="viewEmpTask(${t.id})">
+          <i class="fas fa-eye"></i> View
+        </button>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bg);flex-wrap:wrap">
+        ${t.startDate ? `<span style="font-size:.8rem;color:var(--text-2)"><i class="fas fa-play" style="color:var(--primary);margin-right:4px"></i>Start: ${formatDate(t.startDate)}</span>` : ''}
+        ${t.dueDate ? `<span style="font-size:.8rem;${overdue ? 'color:var(--danger);font-weight:700' : 'color:var(--text-2)'}"><i class="fas fa-clock" style="margin-right:4px"></i>Due: ${formatDate(t.dueDate)}</span>` : ''}
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:6px">
+          ${['pending','inprogress','completed'].map(s =>
+            `<button class="btn btn-sm ${(t.status === s || (s === 'completed' && t.status === 'done') || (s === 'pending' && t.status === 'todo')) ? 'btn-primary' : 'btn-outline'}" onclick="updateMyTaskStatus(${t.id},'${s}')" style="padding:5px 10px;font-size:.75rem">${statusLabel(s)}</button>`
+          ).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateMyTaskStatus(id, status) {
+  const tasks = Storage.getTasks();
+  const idx = tasks.findIndex(t => t.id == id);
+  if (idx > -1) { tasks[idx].status = status; Storage.saveTasks(tasks); }
+  toast(`Marked as "${statusLabel(status)}"`, 'success');
+  renderMyTasks();
+}
+
+function viewEmpTask(id) {
+  const t = Storage.getTasks().find(t => t.id == id);
+  if (!t) return;
+  const assignedTeams = getTaskTeams(t, Storage.getTeams());
+  const isCompleted = t.status === 'completed' || t.status === 'done';
+  const overdue = isOverdue(t.dueDate) && !isCompleted;
+  document.getElementById('empTaskBody').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <span class="badge ${priorityClass(t.priority)}">${t.priority} priority</span>
+      <span class="badge ${statusClass(t.status)}">${statusLabel(t.status)}</span>
+      ${overdue ? '<span class="badge badge-danger">Overdue</span>' : ''}
+    </div>
+    <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:8px">${escapeEmpLinkHtml(t.title)}</h3>
+    ${t.desc ? `<p style="color:var(--text-2);font-size:.875rem;margin-bottom:16px;line-height:1.6">${escapeEmpLinkHtml(t.desc)}</p>` : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--bg);border-radius:8px;padding:12px">
+        <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">Team(s)</div>
+        <span style="font-weight:600">${assignedTeams.length ? assignedTeams.map(te => escapeEmpLinkHtml(te.name)).join(', ') : '—'}</span>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:12px">
+        <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">Due Date</div>
+        <span style="font-weight:600;color:${overdue ? 'var(--danger)' : 'inherit'}">${t.dueDate ? formatDate(t.dueDate) : '—'}</span>
+      </div>
+      ${t.startDate ? `<div style="background:var(--bg);border-radius:8px;padding:12px">
+        <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">Start Date</div>
+        <span style="font-weight:600">${formatDate(t.startDate)}</span>
+      </div>` : ''}
+    </div>
+    <div style="margin-top:4px">
+      <div style="font-size:.82rem;font-weight:700;margin-bottom:8px;color:var(--text)">Update My Status</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${['pending','inprogress','completed'].map(s =>
+          `<button class="btn btn-sm ${(t.status === s || (s === 'completed' && t.status === 'done') || (s === 'pending' && t.status === 'todo')) ? 'btn-primary' : 'btn-outline'}" onclick="updateMyTaskStatus(${t.id},'${s}');closeModal('m-empTask')">${statusLabel(s)}</button>`
+        ).join('')}
+      </div>
+    </div>`;
+  openModal('m-empTask');
+}
+
+/* =================== MY PROGRESS =================== */
+function renderMyProgress() {
+  const all  = getMyTasks();
+  const total = all.length;
+  const done  = all.filter(t => t.status === 'completed' || t.status === 'done').length;
+  const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  document.getElementById('myPct').textContent          = `${pct}%`;
+  document.getElementById('myProgBar').style.width      = `${pct}%`;
+  document.getElementById('my-prog-done').textContent   = `${done} Done`;
+  document.getElementById('my-prog-total').textContent  = `${total} Total`;
+
+  // Status breakdown
+  const statuses = [
+    { key: 'completed',  label: 'Completed',   color: '#22c55e' },
+    { key: 'inprogress', label: 'In Progress',  color: '#6366f1' },
+    { key: 'pending',    label: 'Pending',      color: '#f59e0b' },
+  ];
+  document.getElementById('myBreakdown').innerHTML = statuses.map(s => {
+    const cnt = all.filter(t => t.status === s.key || (s.key === 'pending' && t.status === 'todo') || (s.key === 'completed' && t.status === 'done')).length;
+    const w   = total > 0 ? (cnt / total * 100) : 0;
+    return `<div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:.875rem">
+        <span style="font-weight:600">${s.label}</span>
+        <span style="font-weight:700;color:${s.color}">${cnt} task${cnt !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="prog-wrap"><div class="prog-bar" style="width:${w}%;background:${s.color}"></div></div>
+    </div>`;
+  }).join('');
+
+  // Priority breakdown
+  const priorities = [
+    { key: 'high',   label: 'High',   color: '#ef4444' },
+    { key: 'medium', label: 'Medium', color: '#f59e0b' },
+    { key: 'low',    label: 'Low',    color: '#22c55e' },
+  ];
+  document.getElementById('myPriorityBreakdown').innerHTML = priorities.map(p => {
+    const cnt = all.filter(t => t.priority === p.key).length;
+    const w   = total > 0 ? (cnt / total * 100) : 0;
+    return `<div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:.875rem">
+        <span style="font-weight:600">${p.label}</span>
+        <span style="font-weight:700;color:${p.color}">${cnt} task${cnt !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="prog-wrap"><div class="prog-bar" style="width:${w}%;background:${p.color}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+/* =================== MY TEAM LINKS =================== */
+let empActiveCategory = 'all';
+let empSelectedLinkTeamIds = [];
+
+function escapeEmpLinkHtml(value = '') {
+  return String(value).replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
+function safeEmpLinkUrl(rawUrl) {
+  try {
+    const trimmed = String(rawUrl || '').trim();
+    const url = new URL(trimmed);
+    return (url.protocol === 'https:' || url.protocol === 'http:') ? url.href : '';
+  } catch (_) { return ''; }
+}
+
+/* Category Filter Tabs for Employee */
+function renderEmpCategoryTabs() {
+  const container = document.getElementById('empCategoryTabs');
+  if (!container) return;
+  const allLinks = Storage.getLinks();
+  const teamLinks = allLinks.filter(l => linkBelongsToTeam(l, currentEmp.teamId));
+  const categories = Storage.getLinkCategories();
+
+  const totalCount = teamLinks.length;
+  let tabsHtml = `
+    <button type="button" class="category-tab ${empActiveCategory === 'all' ? 'active' : ''}" onclick="filterEmpCategory('all')">
+      <i class="fas fa-layer-group"></i>
+      <span>All Categories</span>
+      <span class="cat-count">${totalCount}</span>
+    </button>
+  `;
+
+  categories.forEach(cat => {
+    const count = teamLinks.filter(l => (l.category || '').toLowerCase() === cat.toLowerCase()).length;
+    const icon = getCategoryIcon(cat);
+    const isAct = empActiveCategory !== 'all' && empActiveCategory.toLowerCase() === cat.toLowerCase();
+    tabsHtml += `
+      <button type="button" class="category-tab ${isAct ? 'active' : ''}" onclick="filterEmpCategory('${escapeEmpLinkHtml(cat)}')">
+        <i class="${icon}"></i>
+        <span>${escapeEmpLinkHtml(cat)}</span>
+        <span class="cat-count">${count}</span>
+      </button>
+    `;
+  });
+
+  tabsHtml += `
+    <button type="button" class="category-tab add-cat-btn" onclick="openEmpAddCategoryModal()" title="Add your own category">
+      <i class="fas fa-plus"></i>
+      <span>Add Category</span>
+    </button>
+  `;
+
+  container.innerHTML = tabsHtml;
+}
+
+function filterEmpCategory(cat) {
+  empActiveCategory = cat;
+  renderEmpCategoryTabs();
+  renderMyTeamLinks();
+}
+
+/* Category Modal & Management for Employee */
+function populateEmpCategorySelect(selectedValue = '') {
+  const select = document.getElementById('emp-link-category');
+  if (!select) return;
+  const categories = Storage.getLinkCategories();
+  let html = '<option value="">Select Category…</option>';
+  categories.forEach(cat => {
+    const isSel = selectedValue && selectedValue.toLowerCase() === cat.toLowerCase();
+    html += `<option value="${escapeEmpLinkHtml(cat)}" ${isSel ? 'selected' : ''}>${escapeEmpLinkHtml(cat)}</option>`;
+  });
+  html += '<option value="__custom__">+ Add New Category…</option>';
+  select.innerHTML = html;
+  if (selectedValue && !categories.some(c => c.toLowerCase() === selectedValue.toLowerCase())) {
+    const opt = document.createElement('option');
+    opt.value = selectedValue;
+    opt.textContent = selectedValue;
+    opt.selected = true;
+    select.insertBefore(opt, select.lastElementChild);
+  }
+}
+
+function toggleEmpModalInlineCategory(show) {
+  const row = document.getElementById('emp-inline-category-row');
+  const input = document.getElementById('emp-inline-category-name');
+  if (!row) return;
+  if (show === undefined) show = row.style.display === 'none';
+  row.style.display = show ? 'block' : 'none';
+  if (show && input) {
+    input.value = '';
+    setTimeout(() => input.focus(), 50);
+  }
+}
+
+function onEmpCategorySelectChange(val) {
+  if (val === '__custom__') {
+    toggleEmpModalInlineCategory(true);
+  } else {
+    toggleEmpModalInlineCategory(false);
+  }
+}
+
+function saveEmpModalInlineCategory() {
+  const input = document.getElementById('emp-inline-category-name');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) {
+    toast('Please enter a category name.', 'danger');
+    input.focus();
+    return;
+  }
+  const res = Storage.addLinkCategory(val);
+  if (!res.success) {
+    toast(res.message, 'danger');
+    input.focus();
+    return;
+  }
+  toast(`Category "${res.category}" created!`, 'success');
+  populateEmpCategorySelect(res.category);
+  toggleEmpModalInlineCategory(false);
+  renderEmpCategoryTabs();
+}
+
+function openEmpAddCategoryModal() {
+  const input = document.getElementById('emp-new-category-name');
+  if (input) input.value = '';
+  renderEmpCategoryChips();
+  openModal('m-empCategory');
+  if (input) setTimeout(() => input.focus(), 80);
+}
+
+function renderEmpCategoryChips() {
+  const container = document.getElementById('empCategoryChipsList');
+  if (!container) return;
+  const categories = Storage.getLinkCategories();
+  const allLinks = Storage.getLinks();
+  const teamLinks = allLinks.filter(l => linkBelongsToTeam(l, currentEmp.teamId));
+
+  container.innerHTML = categories.map(cat => {
+    const icon = getCategoryIcon(cat);
+    const count = teamLinks.filter(l => (l.category || '').toLowerCase() === cat.toLowerCase()).length;
+    return `
+      <div class="cat-chip" title="${count} link(s) for your team">
+        <i class="${icon} cat-icon"></i>
+        <span>${escapeEmpLinkHtml(cat)}</span>
+        <span style="font-size:10px;opacity:.7">(${count})</span>
+        <button type="button" class="cat-remove-btn" onclick="deleteEmpCategory('${escapeEmpLinkHtml(cat)}')" title="Remove category">×</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function submitEmpNewCategory() {
+  const input = document.getElementById('emp-new-category-name');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) {
+    toast('Please enter a category name.', 'danger');
+    input.focus();
+    return;
+  }
+  const res = Storage.addLinkCategory(val);
+  if (!res.success) {
+    toast(res.message, 'danger');
+    input.focus();
+    return;
+  }
+  toast(`Category "${res.category}" added successfully!`, 'success');
+  input.value = '';
+  renderEmpCategoryChips();
+  renderEmpCategoryTabs();
+  populateEmpCategorySelect();
+  renderMyTeamLinks();
+}
+
+function deleteEmpCategory(catName) {
+  const links = Storage.getLinks();
+  const usingCount = links.filter(l => (l.category || '').toLowerCase() === catName.toLowerCase()).length;
+  let confirmMsg = `Remove category "${catName}"?`;
+  if (usingCount > 0) {
+    confirmMsg += ` ${usingCount} link(s) currently use this category and will be moved to "Other".`;
+  }
+  if (!confirm(confirmMsg)) return;
+
+  if (usingCount > 0) {
+    links.forEach(l => {
+      if ((l.category || '').toLowerCase() === catName.toLowerCase()) {
+        l.category = 'Other';
+      }
+    });
+    Storage.saveLinks(links);
+  }
+
+  Storage.deleteLinkCategory(catName);
+  if (empActiveCategory.toLowerCase() === catName.toLowerCase()) {
+    empActiveCategory = 'all';
+  }
+  toast(`Category "${catName}" removed.`, 'success');
+  renderEmpCategoryChips();
+  renderEmpCategoryTabs();
+  populateEmpCategorySelect();
+  renderMyTeamLinks();
+}
+
+/* Multi-Team Dropdown for Employee */
+function populateEmpLinkTeamDD(selectedIds = []) {
+  empSelectedLinkTeamIds = selectedIds.map(String);
+  const teams = Storage.getTeams();
+  const optionsContainer = document.getElementById('emp-link-teams-options');
+  if (!optionsContainer) return;
+
+  if (!teams.length) {
+    optionsContainer.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--text-muted);text-align:center">No teams available</div>';
+  } else {
+    optionsContainer.innerHTML = teams.map(t => {
+      const isChecked = empSelectedLinkTeamIds.includes(String(t.id));
+      return `
+        <label class="ms-option-label" onclick="event.stopPropagation()">
+          <input type="checkbox" value="${t.id}" ${isChecked ? 'checked' : ''} onchange="onEmpLinkTeamCheckboxChange(event)" />
+          <span>${escapeEmpLinkHtml(t.name)}</span>
+        </label>
+      `;
+    }).join('');
+  }
+  updateEmpLinkTeamsTriggerLabel();
+}
+
+function updateEmpLinkTeamsTriggerLabel() {
+  const teams = Storage.getTeams();
+  const labelEl = document.getElementById('emp-link-teams-label');
+  if (!labelEl) return;
+
+  if (empSelectedLinkTeamIds.length === 0) {
+    labelEl.textContent = 'Select teams…';
+    labelEl.classList.add('placeholder');
+  } else {
+    labelEl.classList.remove('placeholder');
+    const selectedNames = teams
+      .filter(t => empSelectedLinkTeamIds.includes(String(t.id)))
+      .map(t => t.name);
+    if (selectedNames.length <= 2) {
+      labelEl.textContent = selectedNames.join(', ');
+    } else {
+      labelEl.textContent = `${selectedNames.length} teams selected (${selectedNames[0]}, ${selectedNames[1]}…)`;
+    }
+  }
+}
+
+function toggleEmpLinkTeamDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('emp-link-teams-dropdown');
+  if (!dd) return;
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+}
+
+function selectAllEmpLinkTeams(select) {
+  const teams = Storage.getTeams();
+  if (select) {
+    empSelectedLinkTeamIds = teams.map(t => String(t.id));
+  } else {
+    empSelectedLinkTeamIds = [];
+  }
+  const checkboxes = document.querySelectorAll('#emp-link-teams-options input[type="checkbox"]');
+  checkboxes.forEach(cb => { cb.checked = select; });
+  updateEmpLinkTeamsTriggerLabel();
+  const wrap = document.getElementById('emp-link-teams-wrap');
+  if (wrap) {
+    wrap.closest('.field')?.classList.remove('inp-error');
+    wrap.closest('.field')?.querySelectorAll('.field-error-msg').forEach(el => el.remove());
+  }
+}
+
+function onEmpLinkTeamCheckboxChange(e) {
+  const val = String(e.target.value);
+  if (e.target.checked) {
+    if (!empSelectedLinkTeamIds.includes(val)) empSelectedLinkTeamIds.push(val);
+  } else {
+    empSelectedLinkTeamIds = empSelectedLinkTeamIds.filter(id => id !== val);
+  }
+  updateEmpLinkTeamsTriggerLabel();
+  const wrap = document.getElementById('emp-link-teams-wrap');
+  if (wrap && empSelectedLinkTeamIds.length > 0) {
+    wrap.closest('.field')?.classList.remove('inp-error');
+    wrap.closest('.field')?.querySelectorAll('.field-error-msg').forEach(el => el.remove());
+  }
+}
+
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('emp-link-teams-wrap');
+  const dd = document.getElementById('emp-link-teams-dropdown');
+  if (dd && wrap && !wrap.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
+
+/* Employee Add Link Modal */
+function openEmpAddLinkModal() {
+  clearFormErrors('m-empLink');
+  toggleEmpModalInlineCategory(false);
+  document.getElementById('m-empLink-title').textContent = 'Add Link';
+  document.getElementById('emp-link-id').value = '';
+  document.getElementById('emp-link-title').value = '';
+  document.getElementById('emp-link-description').value = '';
+  document.getElementById('emp-link-url').value = '';
+  populateEmpCategorySelect(empActiveCategory !== 'all' ? empActiveCategory : '');
+  document.getElementById('emp-link-saveBtn').textContent = 'Save';
+
+  const dd = document.getElementById('emp-link-teams-dropdown');
+  if (dd) dd.style.display = 'none';
+
+  // Default pre-selected team: employee's own team
+  const defaultTeamIds = currentEmp.teamId ? [String(currentEmp.teamId)] : [];
+  populateEmpLinkTeamDD(defaultTeamIds);
+  openModal('m-empLink');
+}
+
+function saveEmpTeamLink() {
+  clearFormErrors('m-empLink');
+  const modal = document.getElementById('m-empLink');
+  if (!validateFormFields(modal)) return;
+
+  const title = document.getElementById('emp-link-title').value.trim();
+  const description = document.getElementById('emp-link-description').value.trim();
+  const rawUrl = document.getElementById('emp-link-url').value.trim();
+  const category = document.getElementById('emp-link-category').value;
+  const idValue = document.getElementById('emp-link-id').value;
+
+  if (empSelectedLinkTeamIds.length === 0) {
+    const trigger = document.getElementById('emp-link-teams-trigger');
+    const field = trigger ? trigger.closest('.field') : null;
+    if (field) markFieldInvalid(field, trigger, 'Please select at least one team.');
+    toast('Please select at least one team.', 'danger');
+    return;
+  }
+
+  const url = safeEmpLinkUrl(rawUrl);
+  if (!url) {
+    const urlInput = document.getElementById('emp-link-url');
+    const field = urlInput ? urlInput.closest('.field') : null;
+    if (field) markFieldInvalid(field, urlInput, 'Please enter a valid URL (http:// or https://).');
+    toast('Please enter a valid URL (http:// or https://).', 'danger');
+    return;
+  }
+
+  const links = Storage.getLinks();
+  const linkData = {
+    title,
+    description,
+    url,
+    category,
+    teamIds: [...empSelectedLinkTeamIds],
+    teamId: empSelectedLinkTeamIds[0] || currentEmp.teamId,
+    createdBy: currentEmp.fullName || currentEmp.username,
+  };
+
+  if (idValue) {
+    const index = links.findIndex(l => l.id == idValue);
+    if (index < 0) { toast('Link not found.', 'danger'); return; }
+    links[index] = { ...links[index], ...linkData, updatedAt: new Date().toISOString() };
+    toast('Team link updated successfully.', 'success');
+  } else {
+    links.push({ id: Storage.nextId('ts_lid'), ...linkData, createdAt: new Date().toISOString() });
+    toast('Team link saved successfully.', 'success');
+  }
+
+  Storage.saveLinks(links);
+  closeModal('m-empLink');
+  renderEmpCategoryTabs();
+  renderMyTeamLinks();
+}
+
+function renderMyTeamLinks() {
+  const container = document.getElementById('empTeamLinks');
+  if (!container) return;
+  const teams = Storage.getTeams();
+  const myTeam = teams.find(item => item.id == currentEmp.teamId);
+
+  if (!myTeam) {
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><h4>You are not assigned to a team</h4><p>Contact your admin if you think this is incorrect.</p></div>';
+    return;
+  }
+
+  // Filter links visible to current employee's team
+  const allTeamLinks = Storage.getLinks().filter(link => linkBelongsToTeam(link, currentEmp.teamId));
+
+  // Filter by active category
+  const links = allTeamLinks.filter(link => {
+    if (empActiveCategory !== 'all' && link.category !== empActiveCategory) {
+      return false;
+    }
+    return true;
+  }).sort((a, b) => String(a.title || '').localeCompare(String(b.title || '')));
+
+  if (!links.length) {
+    const emptyMsg = empActiveCategory === 'all'
+      ? 'No team links yet. Click Add Link above to share a resource.'
+      : `No links saved under "${empActiveCategory}" for your team.`;
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-link"></i><h4>No links found</h4><p>${escapeEmpLinkHtml(emptyMsg)}</p></div>`;
+    return;
+  }
+
+  container.innerHTML = links.map(link => {
+    const safeUrl = safeEmpLinkUrl(link.url);
+    const catIcon = getCategoryIcon(link.category);
+    const linkTeams = getLinkTeams(link, teams);
+    const teamNames = linkTeams.map(t => t.name).join(', ') || myTeam.name;
+
+    const linkButton = safeUrl
+      ? `<a class="btn btn-primary" href="${escapeEmpLinkHtml(safeUrl)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-arrow-up-right-from-square"></i> Open Link</a>`
+      : '<span class="text-muted">Invalid link URL</span>';
+
+    return `<article class="team-link-card">
+      <div class="team-link-card-top">
+        <span class="team-link-icon"><i class="${catIcon}"></i></span>
+        <span class="badge badge-muted"><i class="${catIcon}"></i> ${escapeEmpLinkHtml(link.category || 'Other')}</span>
+      </div>
+      <h3>${safeUrl ? `<a href="${escapeEmpLinkHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">${escapeEmpLinkHtml(link.title || 'Untitled link')}</a>` : escapeEmpLinkHtml(link.title || 'Untitled link')}</h3>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
+        <i class="fas fa-users" style="margin-right:4px"></i> Shared with: ${escapeEmpLinkHtml(teamNames)}
+      </div>
+      <p class="team-link-card-desc">${escapeEmpLinkHtml(link.description || 'Shared resource for your team.')}</p>
+      <div class="team-link-card-url">
+        ${safeUrl ? `<a href="${escapeEmpLinkHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">${escapeEmpLinkHtml(link.url || '')}</a>` : escapeEmpLinkHtml(link.url || '')}
+      </div>
+      <div class="team-link-card-footer">${linkButton}</div>
+    </article>`;
+  }).join('');
+}
+
+/* =================== TASK REPORT =================== */
+function renderReport() {
+  const all  = getMyTasks();
+  const teams = Storage.getTeams();
+  const tbody = document.getElementById('reportBody');
+  if (!all.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="tbl-empty">No tasks assigned to you yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = all.map((t, i) => {
+    const assignedTeams = getTaskTeams(t, teams);
+    const overdue = isOverdue(t.dueDate) && t.status !== 'done';
+    return `<tr>
+      <td style="color:var(--text-2)">${i + 1}</td>
+      <td>
+        <div style="font-weight:600">${escapeEmpLinkHtml(t.title)}</div>
+        ${t.desc ? `<div style="font-size:.78rem;color:var(--text-2)">${t.desc.length > 60 ? escapeEmpLinkHtml(t.desc.slice(0,60))+'…' : escapeEmpLinkHtml(t.desc)}</div>` : ''}
+      </td>
+      <td><span class="badge ${priorityClass(t.priority)}">${t.priority}</span></td>
+      <td><span class="badge ${statusClass(t.status)}">${statusLabel(t.status)}</span></td>
+      <td style="font-size:.85rem">${t.startDate ? formatDate(t.startDate) : '—'}</td>
+      <td style="font-size:.85rem;${overdue ? 'color:var(--danger);font-weight:700' : ''}">${t.dueDate ? formatDate(t.dueDate) : '—'}</td>
+      <td style="font-size:.85rem">${assignedTeams.length ? assignedTeams.map(te => escapeEmpLinkHtml(te.name)).join(', ') : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* =================== MODAL =================== */
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+});
+
+/* =================== INIT =================== */
+initLiveClock('liveClock');
+renderMyTasks();
+</script>
+</body>
+</html>
